@@ -171,8 +171,34 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
   const [selectedFaculty, setSelectedFaculty] = useState<SelectedFaculty | null>(null);
   const [openSemesters, setOpenSemesters] = useState<Record<number, boolean>>({});
   const [openCourse, setOpenCourse] = useState<Record<string, boolean>>({});
+  const [activeSection, setActiveSection] = useState<string>('');
 
   const localeContent = content[activeLocale];
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = localeContent.navLinks.map(link => {
+        const target = link.target.replace('#', '');
+        return { id: target, element: document.getElementById(target) };
+      }).filter(section => section.element);
+
+      const scrollPosition = window.scrollY + 100; // offset for header height
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
+        if (section.element && section.element.offsetTop <= scrollPosition) {
+          setActiveSection(`#${section.id}`);
+          return;
+        }
+      }
+      setActiveSection('');
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [localeContent.navLinks]);
 
   if (!localeContent) {
     return null;
@@ -230,46 +256,116 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
   return (
     <div className="min-h-screen bg-white">
       <nav className="fixed top-0 w-full bg-white z-50 border-b border-gray-300 shadow-sm">
-        <div className="w-full px-4 sm:px-6 lg:px-10">
-          <div className="relative flex items-center h-20">
-            <a href="/" className="flex items-center space-x-2.5">
-              <div className="h-[4.25rem] w-[4.25rem]">
+        <div className="w-full py-1 lg:py-2 px-3 sm:px-5 lg:px-9">
+          {/* Desktop single-line layout - only on very large screens */}
+          <div className="hidden min-[1800px]:grid grid-cols-3 items-center h-[4.5rem] gap-8">
+            <a href="/" className="flex items-center gap-3 min-w-0">
+              <div className="h-[4rem] w-[4rem]">
                 <img
                   src="/data/images/UoC_logo_overlay.png"
                   alt={`${localeContent.branding.institution} logo`}
                   className="h-full w-full object-contain"
                 />
               </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+              <div className="flex flex-col text-left leading-tight min-w-0">
+                <span className="text-[0.65rem] font-semibold text-gray-600 uppercase tracking-wide truncate">
                   {localeContent.branding.institution}
                 </span>
-                <span className="text-xl font-serif font-bold text-gray-900">
+                <span className="text-base font-serif font-bold text-gray-900 truncate">
                   {localeContent.branding.program}
                 </span>
               </div>
             </a>
 
-            <div className="hidden lg:flex items-center space-x-12 absolute left-1/2 -translate-x-1/2">
+            <div className="flex items-center justify-center gap-8 2xl:gap-12">
               {localeContent.navLinks.map((link) => (
                 <a
                   key={`${link.target}-${link.label}`}
                   href={link.target}
-                  className="text-gray-700 hover:text-gray-900 transition-colors font-medium text-base"
+                  className={`transition-colors font-medium text-sm whitespace-nowrap ${
+                    activeSection === link.target
+                      ? 'text-gray-900 border-b-2 border-gray-900'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
                 >
                   {link.label}
                 </a>
               ))}
             </div>
 
-            <div className="hidden lg:flex items-center ml-auto">
+            <div className="flex items-center justify-end gap-4">
               <LanguageSwitch value={activeLocale} onChange={onChangeLocale} />
             </div>
+          </div>
+
+          {/* Medium screens: two-row layout */}
+          <div className="hidden lg:grid min-[1800px]:hidden grid-cols-[auto_1fr_auto] grid-rows-[auto_auto] items-center gap-y-3 gap-x-4">
+            <a
+              href="/"
+              className="flex items-center gap-2.5 min-w-0 flex-shrink-0 col-start-1 col-end-2 row-start-1"
+            >
+              <div className="h-[3.4rem] w-[3.4rem]">
+                <img
+                  src="/data/images/UoC_logo_overlay.png"
+                  alt={`${localeContent.branding.institution} logo`}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div className="flex flex-col text-left leading-tight min-w-0">
+                <span className="text-[0.55rem] font-semibold text-gray-600 uppercase tracking-wide truncate">
+                  {localeContent.branding.institution}
+                </span>
+                <span className="text-xs font-serif font-bold text-gray-900 truncate">
+                  {localeContent.branding.program}
+                </span>
+              </div>
+            </a>
+
+            <div className="col-start-3 col-end-4 row-start-1 flex justify-end justify-self-end">
+              <LanguageSwitch value={activeLocale} onChange={onChangeLocale} />
+            </div>
+
+            <div className="col-start-1 col-end-4 row-start-2 flex items-center justify-center gap-5 flex-wrap">
+              {localeContent.navLinks.map((link) => (
+                <a
+                  key={`${link.target}-${link.label}`}
+                  href={link.target}
+                  className={`transition-colors font-medium text-xs whitespace-nowrap ${
+                    activeSection === link.target
+                      ? 'text-gray-900 border-b-2 border-gray-900'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile: logo + menu button */}
+          <div className="flex lg:hidden items-center justify-between">
+            <a href="/" className="flex items-center gap-2 min-w-0 flex-shrink-0">
+              <div className="h-[2.5rem] w-[2.5rem] sm:h-[3rem] sm:w-[3rem]">
+                <img
+                  src="/data/images/UoC_logo_overlay.png"
+                  alt={`${localeContent.branding.institution} logo`}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div className="flex flex-col text-left leading-tight min-w-0">
+                <span className="text-[0.55rem] sm:text-xs font-semibold text-gray-600 uppercase tracking-wide truncate">
+                  {localeContent.branding.institution}
+                </span>
+                <span className="text-sm sm:text-base font-serif font-bold text-gray-900 truncate">
+                  {localeContent.branding.program}
+                </span>
+              </div>
+            </a>
 
             <button
               type="button"
               onClick={() => setMobileMenuOpen((prev) => !prev)}
-              className="lg:hidden p-2 ml-auto"
+              className="p-2"
               aria-label="Toggle navigation"
             >
               {mobileMenuOpen ? <X /> : <Menu />}
@@ -279,12 +375,16 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
 
         {mobileMenuOpen && (
           <div className="lg:hidden bg-white border-t border-gray-200">
-            <div className="px-4 py-3 space-y-3">
+            <div className="mx-auto max-w-[82rem] px-4 py-3 space-y-3">
               {localeContent.navLinks.map((link) => (
                 <a
                   key={`${link.target}-${link.label}`}
                   href={link.target}
-                  className="block text-gray-700 hover:text-gray-900 transition-colors font-medium"
+                  className={`block transition-colors font-medium ${
+                    activeSection === link.target
+                      ? 'text-gray-900 font-semibold'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
                 >
                   {link.label}
                 </a>
@@ -300,8 +400,8 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
         )}
       </nav>
 
-      <main>
-  <section className="relative overflow-hidden pt-28 pb-20 px-4 sm:px-6 lg:px-10 bg-gradient-to-b from-gray-50 via-white to-white border-b border-gray-200">
+    <main>
+  <section className="relative overflow-hidden pt-32 sm:pt-36 lg:pt-44 pb-20 px-4 sm:px-6 lg:px-10 bg-gradient-to-b from-gray-50 via-white to-white border-b border-gray-200">
           <div aria-hidden className="absolute inset-0">
             <div className="absolute -top-32 -left-24 w-[28rem] h-[28rem] bg-gradient-to-br from-sky-400/30 via-cyan-300/20 to-transparent blur-3xl rounded-full" />
             <div className="absolute top-24 right-0 w-[32rem] h-[32rem] bg-gradient-to-tr from-purple-400/20 via-indigo-300/10 to-transparent blur-3xl rounded-full" />
