@@ -1,0 +1,435 @@
+import type { LocaleContent, SiteContent } from '../types';
+
+const englishContent: LocaleContent = {
+  branding: {
+    institution: 'University of Cortez',
+    program: "Bioinformatics Master's Program",
+  },
+  navLinks: [
+    { label: 'About', target: '#about' },
+    { label: 'Curriculum', target: '#program' },
+    { label: 'Research', target: '#research' },
+    { label: 'Faculty', target: '#faculty' },
+    { label: 'Announcements', target: '#announcements' },
+    { label: 'Admissions', target: '#admissions' },
+    { label: 'Contact', target: '#contact' },
+  ],
+  hero: {
+    badgeText: 'Accredited Graduate Program',
+    title: 'Master of Science in\nBioinformatics',
+    description:
+      'An interdisciplinary graduate program integrating molecular biology, computer science, and statistical analysis to advance computational approaches in biological research.',
+    tagline: 'Department of Biological Sciences | College of Arts & Sciences | University of Cortez',
+    primaryCta: { label: 'Apply for Admission', href: '#admissions' },
+    secondaryCta: { label: 'Download Brochure', href: '#program' },
+  },
+  stats: [
+    { value: '48', label: 'Credit Hours' },
+    { value: '2', label: 'Years Full-Time' },
+    { value: '1:8', label: 'Faculty Ratio' },
+  ],
+  announcements: {
+    title: 'Program Announcements',
+    description:
+      'Stay informed about upcoming deadlines, program events, and research opportunities for current and prospective students.',
+    items: [
+      {
+        id: 'ann-1',
+        title: 'Spring Research Colloquium',
+        date: 'February 15, 2025',
+        summary:
+          'Weekly seminars featuring invited speakers in computational genomics, molecular modeling, and translational bioinformatics.',
+        body:
+          'Join us every Friday at 2:00 PM in the Bioinformatics Innovation Center for talks that highlight new approaches in genomics, molecular modeling, and translational informatics. Sessions include networking time with speakers and opportunities to share student research updates.',
+        attachments: [],
+      },
+      {
+        id: 'ann-2',
+        title: 'Application Deadline Reminder',
+        date: 'January 15, 2025',
+        summary:
+          'Complete applications, recommendation letters, and supporting materials are due January 15 for Fall 2025 consideration.',
+        body:
+          'The Graduate Admissions Committee encourages applicants to submit materials well before the deadline to ensure full review. Contact the admissions coordinator if you need clarification about transcripts, English proficiency documentation, or prerequisite coursework.',
+        attachments: [],
+      },
+      {
+        id: 'ann-3',
+        title: 'Graduate Fellowship Workshop',
+        date: 'December 3, 2024',
+        summary:
+          'Workshop covering fellowship search strategies, proposal development, and budgeting guidance for prospective applicants.',
+        body:
+          'Faculty mentors and current fellowship recipients will discuss best practices for identifying opportunities, crafting persuasive research aims, and structuring budgets. Students are encouraged to bring draft proposal ideas for feedback.',
+        attachments: [],
+      },
+    ],
+  },
+  about: {
+    title: 'Program Overview',
+    description:
+      'The Master of Science in Bioinformatics at the University of Cortez represents a rigorous academic program designed to prepare graduate students for careers at the forefront of computational biology. Our curriculum emphasizes both theoretical foundations and practical applications, ensuring graduates possess the analytical skills necessary to address complex biological questions through computational methods.',
+    highlights: [
+      {
+        icon: 'flask',
+        title: 'Research Excellence',
+        description:
+          'Access to state-of-the-art computational infrastructure and wetlab facilities. Engage in cutting-edge research projects with faculty investigators in genomics, proteomics, and systems biology.',
+      },
+      {
+        icon: 'graduation',
+        title: 'Distinguished Faculty',
+        description:
+          'Learn from internationally recognized scholars with active research programs funded by NIH, NSF, and other federal agencies. Our faculty publish regularly in high-impact journals.',
+      },
+      {
+        icon: 'users',
+        title: 'Career Outcomes',
+        description:
+          'Our graduates pursue successful careers in biotechnology, pharmaceutical research, academic institutions, and government laboratories. Many continue to doctoral programs at leading universities.',
+      },
+    ],
+  },
+  curriculum: {
+    title: 'Curriculum Structure',
+    description:
+      'The program requires completion of 48 credit hours, including core courses, electives, and a thesis research project. Students develop expertise in computational methods, statistical analysis, and biological applications.',
+    coreTitle: 'Core Curriculum',
+    coreCourses: [
+      { code: 'BINF 601', name: 'Fundamentals of Bioinformatics', credits: '4' },
+      { code: 'BINF 610', name: 'Algorithms in Computational Biology', credits: '3' },
+      { code: 'BINF 620', name: 'Statistical Methods in Bioinformatics', credits: '4' },
+      { code: 'BINF 630', name: 'Genomics and Sequence Analysis', credits: '3' },
+      { code: 'BINF 640', name: 'Machine Learning for Biological Data', credits: '4' },
+      { code: 'BINF 650', name: 'Structural Bioinformatics', credits: '3' },
+    ],
+    specializationTitle: 'Specialization Tracks',
+    specializations: [
+      {
+        title: 'Computational Genomics',
+        description:
+          'Focus on next-generation sequencing analysis, population genetics, and comparative genomics methodologies.',
+      },
+      {
+        title: 'Systems Biology',
+        description:
+          'Network analysis, metabolic modeling, and integrative approaches to understanding biological systems.',
+      },
+      {
+        title: 'Structural Bioinformatics',
+        description:
+          'Protein structure prediction, molecular dynamics, and drug discovery applications.',
+      },
+      {
+        title: 'Clinical Bioinformatics',
+        description:
+          'Precision medicine, cancer genomics, and translational research applications.',
+      },
+    ],
+    creditBreakdown: [
+      { value: '24', label: 'Core Credits' },
+      { value: '18', label: 'Elective Credits' },
+      { value: '6', label: 'Thesis Research' },
+      { value: '48', label: 'Total Credits' },
+    ],
+  },
+  research: {
+    title: 'Research Areas',
+    description:
+      'Our faculty maintain active research programs addressing fundamental questions in biology through computational approaches. Graduate students collaborate on federally-funded projects and publish in peer-reviewed journals.',
+    areas: [
+      {
+        icon: 'database',
+        title: 'Computational Genomics & Transcriptomics',
+        description:
+          'Analysis of high-throughput sequencing data, gene expression profiling, and regulatory network inference. Current projects investigate cancer genomics and single-cell RNA sequencing methodologies.',
+      },
+      {
+        icon: 'microscope',
+        title: 'Structural Biology & Drug Design',
+        description:
+          'Protein structure prediction, molecular docking simulations, and rational drug design. Research focuses on computational approaches to identify novel therapeutic targets.',
+      },
+      {
+        icon: 'brain',
+        title: 'Systems Biology & Network Analysis',
+        description:
+          'Mathematical modeling of biological systems, pathway analysis, and multi-omics data integration. Projects examine metabolic networks and signal transduction pathways.',
+      },
+      {
+        icon: 'dna',
+        title: 'Evolutionary & Population Genomics',
+        description:
+          'Phylogenetic analysis, molecular evolution, and population genetics. Research investigates adaptive evolution and genetic diversity across species.',
+      },
+      {
+        icon: 'flask',
+        title: 'Metagenomics & Microbiome',
+        description:
+          'Microbial community analysis, taxonomic classification, and functional profiling of microbiomes. Studies focus on host-microbe interactions and environmental microbiology.',
+      },
+      {
+        icon: 'bookmark',
+        title: 'Precision Medicine & Clinical Informatics',
+        description:
+          'Genomic medicine applications, biomarker discovery, and clinical decision support systems. Research translates computational findings to clinical practice.',
+      },
+    ],
+  },
+  faculty: {
+    title: 'Graduate Faculty',
+    description:
+      'Our faculty members are active researchers with expertise spanning computational methods, molecular biology, and statistical analysis. All faculty serve as thesis advisors and mentor graduate students in their research programs.',
+    members: [
+      {
+        name: 'Elena Martinez, PhD',
+        title: 'Professor & Program Director',
+        specialty: 'Computational Genomics',
+        education: 'PhD, Stanford University',
+        research: 'Cancer genomics, transcriptional regulation',
+      },
+      {
+        name: 'James Chen, PhD',
+        title: 'Associate Professor',
+        specialty: 'Machine Learning',
+        education: 'PhD, MIT',
+        research: 'Deep learning for protein structure prediction',
+      },
+      {
+        name: 'Sarah Williams, PhD',
+        title: 'Associate Professor',
+        specialty: 'Structural Biology',
+        education: 'PhD, UC Berkeley',
+        research: 'Molecular dynamics, drug discovery',
+      },
+    ],
+  },
+  admissions: {
+    title: 'Admissions Requirements',
+    description:
+      'The Bioinformatics Graduate Admissions Committee reviews applications holistically, considering academic preparation, research experience, and potential for success in graduate studies.',
+    requirementsTitle: 'Application Requirements',
+    requirements: [
+      {
+        title: "Bachelor's Degree",
+        description: 'From an accredited institution in Biology, Computer Science, Mathematics, Chemistry, or related field',
+      },
+      {
+        title: 'Minimum GPA',
+        description: '3.0 cumulative GPA on a 4.0 scale; 3.3 or higher preferred for competitive consideration',
+      },
+      {
+        title: 'Prerequisite Coursework',
+        description: 'Molecular Biology, Biochemistry, Calculus I & II, Statistics, and Programming (Python or R)',
+      },
+      {
+        title: 'GRE Scores',
+        description: 'General Test scores optional for 2025 admission cycle; recommended for international applicants',
+      },
+      {
+        title: 'Letters of Recommendation',
+        description: 'Three letters from academic or professional references who can assess research potential',
+      },
+      {
+        title: 'Statement of Purpose',
+        description: '500-1000 words describing research interests, career goals, and fit with program faculty',
+      },
+      {
+        title: 'Curriculum Vitae',
+        description: 'Including research experience, publications, presentations, and relevant technical skills',
+      },
+      {
+        title: 'Transcripts',
+        description: 'Official transcripts from all post-secondary institutions attended',
+      },
+    ],
+    cards: [
+      {
+        icon: 'calendar',
+        title: 'Fall 2025 Admission',
+        details: [
+          { label: 'Application Deadline', value: 'January 15, 2025' },
+          { label: 'Decision Notification', value: 'March 15, 2025' },
+          { label: 'Program Start', value: 'August 25, 2025' },
+        ],
+        ctaLabel: 'Submit Application',
+        ctaTarget: '#contact',
+      },
+      {
+        icon: 'award',
+        title: 'Financial Support',
+        details: [
+          { label: 'Teaching Assistantships', value: 'Tuition waiver + stipend' },
+          { label: 'Research Assistantships', value: 'Available through faculty grants' },
+          { label: 'Merit Scholarships', value: 'Up to $15,000 annually' },
+        ],
+        ctaLabel: 'Funding Information',
+        ctaTarget: '#contact',
+      },
+    ],
+  },
+  contact: {
+    title: 'Contact Information',
+    description:
+      'For inquiries regarding the Master of Science in Bioinformatics program, please contact the Graduate Program Office.',
+    cards: [
+      {
+        icon: 'mapPin',
+        title: 'Mailing Address',
+        lines: [
+          'Bioinformatics Graduate Program',
+          'Department of Biological Sciences',
+          'University of Cortez',
+          '1234 Science Drive, Building A, Room 301',
+          'Cortez, Colorado 81321',
+        ],
+      },
+      {
+        icon: 'phone',
+        title: 'Telephone',
+        lines: ['Office: (555) 123-4567', 'Fax: (555) 123-4568'],
+      },
+      {
+        icon: 'mail',
+        title: 'Email',
+        lines: ['bioinformatics@cortez.edu', 'graduate.admissions@cortez.edu'],
+      },
+    ],
+    officeHours: 'Office Hours: Monday - Friday, 9:00 AM - 5:00 PM MST',
+    formTitle: 'Request Information',
+    submitLabel: 'Submit Inquiry',
+    formFields: [
+      { label: 'Full Name', type: 'text' },
+      { label: 'Email Address', type: 'email' },
+      { label: 'Phone Number', type: 'tel' },
+      {
+        label: 'Area of Interest',
+        type: 'select',
+        options: [
+          'Select a specialization',
+          'Computational Genomics',
+          'Systems Biology',
+          'Structural Bioinformatics',
+          'Clinical Bioinformatics',
+        ],
+      },
+      { label: 'Message', type: 'textarea' },
+    ],
+  },
+  footer: {
+    institution: 'University of Cortez',
+    subheading: 'Bioinformatics Graduate Program',
+    copyright: '© 2025 University of Cortez. All rights reserved.',
+    legal: 'An Equal Opportunity Institution',
+  },
+};
+
+const greekContent: LocaleContent = {
+  ...englishContent,
+  navLinks: [
+    { label: 'Σχετικά', target: '#about' },
+    { label: 'Πρόγραμμα', target: '#program' },
+    { label: 'Έρευνα', target: '#research' },
+    { label: 'Διδακτικό Προσωπικό', target: '#faculty' },
+    { label: 'Ανακοινώσεις', target: '#announcements' },
+    { label: 'Εισαγωγή', target: '#admissions' },
+    { label: 'Επικοινωνία', target: '#contact' },
+  ],
+  hero: {
+    badgeText: 'Εγκεκριμένο Μεταπτυχιακό Πρόγραμμα',
+    title: 'Μεταπτυχιακό στη\nΒιοπληροφορική',
+    description:
+      'Διεπιστημονικό πρόγραμμα που ενώνει μοριακή βιολογία, επιστήμη υπολογιστών και στατιστική για την ανάπτυξη υπολογιστικών προσεγγίσεων στη βιολογική έρευνα.',
+    tagline: 'Τμήμα Βιολογικών Επιστημών | Σχολή Θετικών Επιστημών | Πανεπιστήμιο Cortez',
+    primaryCta: { label: 'Αίτηση Εισαγωγής', href: '#admissions' },
+    secondaryCta: { label: 'Κατέβασμα Ενημερωτικού', href: '#program' },
+  },
+  stats: [
+    { value: '48', label: 'Πιστωτικές Μονάδες' },
+    { value: '2', label: 'Έτη Πλήρους Φοίτησης' },
+    { value: '1:8', label: 'Αναλογία Διδασκόντων' },
+  ],
+  announcements: {
+    title: 'Ανακοινώσεις Προγράμματος',
+    description:
+      'Ενημερωθείτε για προθεσμίες, εκδηλώσεις και ευκαιρίες έρευνας για υφιστάμενους και υποψήφιους φοιτητές.',
+    items: englishContent.announcements.items.map((item) => ({
+      ...item,
+      summary: item.summary,
+      body: item.body,
+      attachments: [],
+    })),
+  },
+  about: {
+    title: 'Παρουσίαση Προγράμματος',
+    description:
+      'Το Μεταπτυχιακό στη Βιοπληροφορική του Πανεπιστημίου Cortez προετοιμάζει επιστήμονες για πρωτοποριακή έρευνα στη βιολογία μέσω υπολογιστικών μεθόδων, συνδυάζοντας θεωρία και εφαρμογή.',
+    highlights: [
+      {
+        icon: 'flask',
+        title: 'Ερευνητική Αριστεία',
+        description:
+          'Πρόσβαση σε προηγμένες υπολογιστικές υποδομές και εργαστήρια. Συμμετοχή σε έργα αιχμής με αντικείμενο γονιδιωματική, πρωτεωμική και συστημική βιολογία.',
+      },
+      {
+        icon: 'graduation',
+        title: 'Διακεκριμένο Προσωπικό',
+        description:
+          'Διδασκαλία από διεθνώς αναγνωρισμένους ερευνητές με ενεργά χρηματοδοτούμενα προγράμματα και δημοσιεύσεις σε κορυφαία περιοδικά.',
+      },
+      {
+        icon: 'users',
+        title: 'Επαγγελματική Σταδιοδρομία',
+        description:
+          'Οι απόφοιτοι σταδιοδρομούν σε βιοτεχνολογία, φαρμακευτική έρευνα, ακαδημαϊκούς φορείς και δημόσια εργαστήρια, ή συνεχίζουν σε διδακτορικές σπουδές.',
+      },
+    ],
+  },
+  curriculum: {
+    ...englishContent.curriculum,
+    title: 'Δομή Προγράμματος Σπουδών',
+    description:
+      'Το πρόγραμμα απαιτεί 48 πιστωτικές μονάδες με βασικά μαθήματα, επιλογές και ερευνητική διατριβή. Οι φοιτητές αναπτύσσουν δεξιότητες σε υπολογιστικές μεθόδους και βιολογικές εφαρμογές.',
+    coreTitle: 'Βασικά Μαθήματα',
+    specializationTitle: 'Κατευθύνσεις Εξειδίκευσης',
+  },
+  research: {
+    ...englishContent.research,
+    title: 'Τομείς Έρευνας',
+    description:
+      'Τα μέλη ΔΕΠ υλοποιούν ερευνητικά προγράμματα που απαντούν σε θεμελιώδη βιολογικά ερωτήματα με υπολογιστικές προσεγγίσεις.',
+  },
+  faculty: {
+    ...englishContent.faculty,
+    title: 'Διδακτικό Προσωπικό',
+    description:
+      'Τα μέλη του προγράμματος καθοδηγούν μεταπτυχιακούς φοιτητές και επιβλέπουν ερευνητικές εργασίες με διεθνή αναγνώριση.',
+  },
+  admissions: {
+    ...englishContent.admissions,
+    title: 'Προϋποθέσεις Εισαγωγής',
+    description:
+      'Η Επιτροπή Εισαγωγών αξιολογεί συνολικά την ακαδημαϊκή προετοιμασία, την ερευνητική εμπειρία και τις δυνατότητες επιτυχίας.',
+    requirementsTitle: 'Απαραίτητα Δικαιολογητικά',
+  },
+  contact: {
+    ...englishContent.contact,
+    title: 'Στοιχεία Επικοινωνίας',
+    description:
+      'Για πληροφορίες σχετικά με το πρόγραμμα, επικοινωνήστε με τη Γραμματεία Μεταπτυχιακών Σπουδών.',
+    formTitle: 'Αίτηση Πληροφόρησης',
+    submitLabel: 'Αποστολή Αιτήματος',
+  },
+  footer: {
+    ...englishContent.footer,
+    subheading: 'Μεταπτυχιακό Πρόγραμμα Βιοπληροφορικής',
+    legal: 'Ίδρυμα Ίσων Ευκαιριών',
+  },
+};
+
+const content: SiteContent = {
+  en: englishContent,
+  gr: greekContent,
+};
+
+export default content;
