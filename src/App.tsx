@@ -178,6 +178,10 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
     return null;
   }
 
+  const badgeClickTarget = localeContent.hero.clickTarget;
+  const badgeClickHref = badgeClickTarget?.href?.trim();
+  const badgeClickAriaLabel = badgeClickTarget?.ariaLabel?.trim() || localeContent.hero.badgeText;
+
   const handleSelectAnnouncement = (id: string) => {
     setSelectedAnnouncement({ locale: activeLocale, id });
   };
@@ -307,11 +311,23 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
           <div className="relative max-w-[82rem] mx-auto">
             <div className="text-center mb-12">
               <div className="inline-block mb-6">
-                <div className="flex items-center justify-center px-6 py-3 bg-gray-900 text-white">
-                  <span className="text-sm font-semibold uppercase tracking-wider">
-                    {localeContent.hero.badgeText}
-                  </span>
-                </div>
+                {badgeClickHref ? (
+                  <a
+                    href={badgeClickHref}
+                    aria-label={badgeClickAriaLabel}
+                    className="flex items-center justify-center px-6 py-3 bg-gray-900 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  >
+                    <span className="text-sm font-semibold uppercase tracking-wider">
+                      {localeContent.hero.badgeText}
+                    </span>
+                  </a>
+                ) : (
+                  <div className="flex items-center justify-center px-6 py-3 bg-gray-900 text-white">
+                    <span className="text-sm font-semibold uppercase tracking-wider">
+                      {localeContent.hero.badgeText}
+                    </span>
+                  </div>
+                )}
               </div>
               <h1 className="text-[3.3rem] lg:text-[4.2rem] font-serif font-bold text-gray-900 mb-5 leading-tight">
                 {localeContent.hero.title.split('\n').map((line, index) => (

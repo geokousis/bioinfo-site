@@ -78,6 +78,7 @@ export type LocaleContent = {
     tagline: string;
     primaryCta: { label: string; href: string };
     secondaryCta: { label: string; href: string };
+    clickTarget?: { href: string; ariaLabel?: string };
   };
   stats: Statistic[];
   announcements: {

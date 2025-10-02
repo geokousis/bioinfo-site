@@ -12,6 +12,10 @@ const content = {
       "secondaryCta": {
         "href": "#program",
         "label": "Program"
+      },
+      "clickTarget": {
+        "href": "#program",
+        "ariaLabel": "View detailed program information"
       }
     },
     "about": {
@@ -436,6 +440,10 @@ const content = {
       "secondaryCta": {
         "href": "#program",
         "label": "Πρόγραμμα"
+      },
+      "clickTarget": {
+        "href": "#program",
+        "ariaLabel": "Μετάβαση στην ενότητα του προγράμματος"
       }
     },
     "about": {

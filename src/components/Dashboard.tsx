@@ -170,6 +170,40 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
     }));
   };
 
+  const updateHeroBadgeLink = (field: 'href' | 'ariaLabel', value: string) => {
+    updateActiveLocale((locale) => {
+      const current = locale.hero.clickTarget ?? { href: '', ariaLabel: '' };
+      const next = {
+        ...current,
+        [field]: value,
+      };
+
+      const trimmedHref = next.href.trim();
+      const trimmedLabel = (next.ariaLabel ?? '').trim();
+
+      if (!trimmedHref && !trimmedLabel) {
+        const { clickTarget: _unused, ...restHero } = locale.hero;
+        return {
+          ...locale,
+          hero: {
+            ...restHero,
+          },
+        };
+      }
+
+      return {
+        ...locale,
+        hero: {
+          ...locale.hero,
+          clickTarget: {
+            href: trimmedHref,
+            ariaLabel: trimmedLabel || undefined,
+          },
+        },
+      };
+    });
+  };
+
   const addStat = () => {
     updateActiveLocale((locale) => ({
       ...locale,
@@ -1287,6 +1321,23 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
                 inputClass={inputClass}
               />
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <DashboardInput
+                label="Badge Link URL"
+                value={localeContent.hero.clickTarget?.href ?? ''}
+                onChange={(value) => updateHeroBadgeLink('href', value)}
+                inputClass={inputClass}
+              />
+              <DashboardInput
+                label="Badge Link Accessible Label"
+                value={localeContent.hero.clickTarget?.ariaLabel ?? ''}
+                onChange={(value) => updateHeroBadgeLink('ariaLabel', value)}
+                inputClass={inputClass}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Provide a URL to make the badge clickable. Leave blank to keep the badge static.
+            </p>
           </DashboardSection>
 
           <DashboardSection title="Program Statistics">
