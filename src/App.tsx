@@ -330,7 +330,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                 <a
                   key={`${link.target}-${link.label}`}
                   href={link.target}
-                  className={`transition-colors font-medium text-xs whitespace-nowrap ${
+                  className={`transition-colors font-medium text-sm whitespace-nowrap ${
                     activeSection === link.target
                       ? 'text-gray-900 border-b-2 border-gray-900'
                       : 'text-gray-700 hover:text-gray-900'
