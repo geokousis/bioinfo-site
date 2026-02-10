@@ -11,6 +11,7 @@ const initialFormState = { email: '', password: '' };
 type AdminPageProps = {
   content: SiteContent;
   onSaveContent: (next: SiteContent) => Promise<void>;
+  onForceSync: () => Promise<void>;
   activeLocale: LocaleCode;
   onChangeLocale: (locale: LocaleCode) => void;
 };
@@ -18,6 +19,7 @@ type AdminPageProps = {
 export function AdminPage({
   content,
   onSaveContent,
+  onForceSync,
   activeLocale,
   onChangeLocale,
 }: AdminPageProps) {
@@ -174,6 +176,7 @@ export function AdminPage({
     <Dashboard
       content={content}
       onSave={handleSave}
+      onForceSync={onForceSync}
       activeLocale={activeLocale}
       onChangeLocale={onChangeLocale}
       onSignOut={handleSignOut}

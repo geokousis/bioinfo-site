@@ -1,13 +1,19 @@
-import { ChangeEvent, ReactNode, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  History,
   Image as ImageIcon,
   LogOut,
   Plus,
+  RefreshCw,
   Save,
   SlidersHorizontal,
   Trash2,
-  Undo2
+  Undo2,
+  X
 } from 'lucide-react';
 
 import type {
@@ -27,7 +33,7 @@ import type {
   Statistic
 } from '../types';
 import { iconOptions } from '../icons';
-import { deleteSiteAsset, uploadSiteAsset } from '../lib/contentService';
+import { deleteSiteAsset, uploadSiteAsset, saveContentBackup, fetchContentBackups, restoreContentBackup, type ContentBackup } from '../lib/contentService';
 import { LanguageSwitch } from './LanguageSwitch';
 import { RichTextEditor } from './RichTextEditor';
 
@@ -35,6 +41,7 @@ type DashboardProps = {
   content: SiteContent;
   onSave: (next: SiteContent) => Promise<void>;
   onSignOut: () => void;
+  onForceSync: () => Promise<void>;
   activeLocale: LocaleCode;
   onChangeLocale: (locale: LocaleCode) => void;
 };
@@ -44,26 +51,50 @@ const MAX_HISTORY = 20;
 
 const deepEqual = (a: SiteContent, b: SiteContent) => JSON.stringify(a) === JSON.stringify(b);
 
-export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLocale }: DashboardProps) {
+export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocale, onChangeLocale }: DashboardProps) {
   const [workingContent, setWorkingContent] = useState<SiteContent>(() => CLONE(content));
   const [undoStack, setUndoStack] = useState<SiteContent[]>([]);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [backups, setBackups] = useState<ContentBackup[]>([]);
+  const [loadingBackups, setLoadingBackups] = useState(false);
+  const [restoringBackup, setRestoringBackup] = useState<number | null>(null);
+  const [creatingBackup, setCreatingBackup] = useState(false);
+
+  // Track the last synced content from props to detect external changes
+  const lastSyncedContentRef = useRef<string>(JSON.stringify(content));
+  const isFirstMount = useRef(true);
+
+  // Only sync from prop when content actually changes from external source
+  useEffect(() => {
+    const contentStr = JSON.stringify(content);
+
+    // Skip on first mount - we already initialized with content
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
+    // Only sync if content prop actually changed from what we last synced
+    if (contentStr !== lastSyncedContentRef.current) {
+      // Only reset if user hasn't made changes
+      if (!isDirty) {
+        setWorkingContent(CLONE(content));
+        setUndoStack([]);
+        setSaveError(null);
+        setIsSaving(false);
+      }
+      lastSyncedContentRef.current = contentStr;
+    }
+  }, [content, isDirty]);
 
   useEffect(() => {
-    setWorkingContent(CLONE(content));
-    setUndoStack([]);
-    setSaveError(null);
-    setIsSaving(false);
-  }, [content]);
-
-  useEffect(() => {
-    setIsDirty((prev) => {
-      const next = !deepEqual(workingContent, content);
-      return prev === next ? prev : next;
-    });
-  }, [workingContent, content]);
+    const hasChanges = JSON.stringify(workingContent) !== lastSyncedContentRef.current;
+    setIsDirty(hasChanges);
+  }, [workingContent]);
 
   const localeContent = workingContent[activeLocale];
   const inputClass = 'w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900';
@@ -123,6 +154,7 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
     setSaveError(null);
     try {
       await onSave(CLONE(workingContent));
+      lastSyncedContentRef.current = JSON.stringify(workingContent);
       setUndoStack([]);
       setIsDirty(false);
     } catch (error) {
@@ -130,6 +162,69 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
       setSaveError(error instanceof Error ? error.message : 'Failed to save content');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleForceSync = async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    setSaveError(null);
+    try {
+      await onForceSync();
+      // Reset working content after sync - the content prop will update
+      setUndoStack([]);
+      setIsDirty(false);
+    } catch (error) {
+      console.error('Failed to sync from Supabase', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to sync from database');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const openBackupModal = async () => {
+    setShowBackupModal(true);
+    setLoadingBackups(true);
+    try {
+      const fetchedBackups = await fetchContentBackups();
+      setBackups(fetchedBackups);
+    } catch (error) {
+      console.error('Failed to fetch backups', error);
+    } finally {
+      setLoadingBackups(false);
+    }
+  };
+
+  const handleCreateBackup = async (fromModal = false) => {
+    setCreatingBackup(true);
+    try {
+      await saveContentBackup(workingContent);
+      if (fromModal || showBackupModal) {
+        const fetchedBackups = await fetchContentBackups();
+        setBackups(fetchedBackups);
+      }
+    } catch (error) {
+      console.error('Failed to create backup', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to create backup');
+    } finally {
+      setCreatingBackup(false);
+    }
+  };
+
+  const handleRestoreBackup = async (backupId: number) => {
+    setRestoringBackup(backupId);
+    try {
+      const restoredContent = await restoreContentBackup(backupId);
+      if (restoredContent) {
+        setWorkingContent(restoredContent);
+        setShowBackupModal(false);
+        setUndoStack([]);
+      }
+    } catch (error) {
+      console.error('Failed to restore backup', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to restore backup');
+    } finally {
+      setRestoringBackup(null);
     }
   };
 
@@ -152,22 +247,32 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
   const addNavLink = () => {
     updateActiveLocale((locale) => ({
       ...locale,
-      navLinks: [...locale.navLinks, { label: 'New Link', target: '#section' }],
+      navLinks: [...(locale.navLinks ?? []), { label: 'New Link', target: '#section' }],
     }));
   };
 
   const updateNavLink = (index: number, field: 'label' | 'target', value: string) => {
     updateActiveLocale((locale) => ({
       ...locale,
-      navLinks: locale.navLinks.map((link, idx) => (idx === index ? { ...link, [field]: value } : link)),
+      navLinks: (locale.navLinks ?? []).map((link, idx) => (idx === index ? { ...link, [field]: value } : link)),
     }));
   };
 
   const removeNavLink = (index: number) => {
     updateActiveLocale((locale) => ({
       ...locale,
-      navLinks: locale.navLinks.filter((_, idx) => idx !== index),
+      navLinks: (locale.navLinks ?? []).filter((_, idx) => idx !== index),
     }));
+  };
+
+  const moveNavLink = (index: number, direction: 'up' | 'down') => {
+    updateActiveLocale((locale) => {
+      const links = [...(locale.navLinks ?? [])];
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= links.length) return locale;
+      [links[index], links[newIndex]] = [links[newIndex], links[index]];
+      return { ...locale, navLinks: links };
+    });
   };
 
   const updateHeroBadgeLink = (field: 'href' | 'ariaLabel', value: string) => {
@@ -756,6 +861,32 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
     }
   };
 
+  const copyFacultyMemberToOtherLocale = (index: number) => {
+    const member = workingContent[activeLocale]?.faculty.members[index];
+    if (!member) return;
+
+    const otherLocale: LocaleCode = activeLocale === 'en' ? 'gr' : 'en';
+    const memberCopy = CLONE(member);
+
+    updateLocaleContent(otherLocale, (locale) => ({
+      ...locale,
+      faculty: {
+        ...locale.faculty,
+        members: [...locale.faculty.members, memberCopy],
+      },
+    }));
+  };
+
+  const moveFacultyMember = (index: number, direction: 'up' | 'down') => {
+    updateActiveLocale((locale) => {
+      const members = [...locale.faculty.members];
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= members.length) return locale;
+      [members[index], members[newIndex]] = [members[newIndex], members[index]];
+      return { ...locale, faculty: { ...locale.faculty, members } };
+    });
+  };
+
   const addFacultyPhoto = async (localeCode: LocaleCode, index: number, file: File) => {
     const member = workingContent[localeCode]?.faculty.members[index];
     if (!member) {
@@ -1136,7 +1267,7 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="flex items-center space-x-2 text-sm font-semibold text-gray-900">
@@ -1158,6 +1289,35 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
             >
               View site
             </Link>
+            <button
+              type="button"
+              onClick={handleForceSync}
+              className="inline-flex items-center justify-center gap-1 rounded-full border border-blue-500 bg-blue-500 px-2 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-blue-600"
+              disabled={isSyncing}
+              title="Reload content from Supabase database"
+            >
+              <RefreshCw className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>Sync</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCreateBackup(false)}
+              className="inline-flex items-center justify-center gap-1 rounded-full border border-green-600 bg-green-600 px-2 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-green-700"
+              disabled={creatingBackup}
+              title="Create a backup of current content"
+            >
+              <Plus className={`h-3 w-3 ${creatingBackup ? 'animate-pulse' : ''}`} />
+              <span>Backup</span>
+            </button>
+            <button
+              type="button"
+              onClick={openBackupModal}
+              className="inline-flex items-center justify-center gap-1 rounded-full border border-purple-500 bg-purple-500 px-2 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-purple-600"
+              title="View and restore backups"
+            >
+              <History className="h-3 w-3" />
+              <span>Restore</span>
+            </button>
             <button
               type="button"
               onClick={handleUndo}
@@ -1218,27 +1378,60 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
 
           <DashboardSection title="Navigation">
             <div className="space-y-4">
-              {localeContent.navLinks.map((link, index) => (
-                <div key={`nav-link-${index}`} className="space-y-2 border border-gray-200 rounded-md p-3 bg-white">
-                  <DashboardHeader
-                    title={`Link ${index + 1}`}
-                    canRemove={localeContent.navLinks.length > 1}
-                    onRemove={() => removeNavLink(index)}
-                  />
-                  <DashboardInput
-                    label="Label"
-                    value={link.label}
-                    onChange={(value) => updateNavLink(index, 'label', value)}
-                    inputClass={inputClass}
-                  />
-                  <DashboardInput
-                    label="Anchor (e.g. #about)"
-                    value={link.target}
-                    onChange={(value) => updateNavLink(index, 'target', value)}
-                    inputClass={inputClass}
-                  />
-                </div>
-              ))}
+              {(localeContent.navLinks ?? []).map((link, index) => {
+                const navLinks = localeContent.navLinks ?? [];
+                const isFirst = index === 0;
+                const isLast = index === navLinks.length - 1;
+                return (
+                  <div key={`nav-link-${index}`} className="space-y-2 border border-gray-200 rounded-md p-3 bg-white">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-700">Link {index + 1}</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => moveNavLink(index, 'up')}
+                          disabled={isFirst}
+                          className={`p-1 rounded ${isFirst ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+                          aria-label="Move up"
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveNavLink(index, 'down')}
+                          disabled={isLast}
+                          className={`p-1 rounded ${isLast ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+                          aria-label="Move down"
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </button>
+                        {navLinks.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeNavLink(index)}
+                            className="p-1 rounded text-red-600 hover:bg-red-50"
+                            aria-label="Remove link"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <DashboardInput
+                      label="Label"
+                      value={link.label}
+                      onChange={(value) => updateNavLink(index, 'label', value)}
+                      inputClass={inputClass}
+                    />
+                    <DashboardInput
+                      label="Anchor (e.g. #about)"
+                      value={link.target}
+                      onChange={(value) => updateNavLink(index, 'target', value)}
+                      inputClass={inputClass}
+                    />
+                  </div>
+                );
+              })}
             </div>
             <DashboardAddButton label="Add Link" onClick={addNavLink} />
           </DashboardSection>
@@ -1990,9 +2183,51 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
               richText={true}
             />
             <div className="space-y-3">
-              {localeContent.faculty.members.map((member, index) => (
+              {localeContent.faculty.members.map((member, index) => {
+                const isFirst = index === 0;
+                const isLast = index === localeContent.faculty.members.length - 1;
+                return (
                 <div key={`faculty-${index}`} className="bg-white border border-gray-200 rounded-md p-3 space-y-2">
-                  <DashboardHeader title={`Faculty ${index + 1}`} onRemove={() => removeFacultyMember(activeLocale, index)} />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase text-gray-500">Faculty {index + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => moveFacultyMember(index, 'up')}
+                        disabled={isFirst}
+                        className={`p-1 rounded ${isFirst ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+                        aria-label="Move up"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveFacultyMember(index, 'down')}
+                        disabled={isLast}
+                        className={`p-1 rounded ${isLast ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+                        aria-label="Move down"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => copyFacultyMemberToOtherLocale(index)}
+                        className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                        title={activeLocale === 'en' ? 'Copy to Greek' : 'Copy to English'}
+                      >
+                        <Copy className="h-4 w-4" />
+                        <span className="text-xs">{activeLocale === 'en' ? 'Copy to Greek' : 'Copy to English'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeFacultyMember(activeLocale, index)}
+                        className="text-red-600 hover:text-red-700"
+                        aria-label="Remove faculty"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between bg-gray-50 border border-dashed border-gray-300 rounded p-3">
                     <div className="flex items-center space-x-2 text-xs text-gray-600">
                       <ImageIcon className="h-4 w-4" />
@@ -2044,12 +2279,6 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
                     onChange={(value) => updateFacultyMember(index, 'specialty', value)}
                     inputClass={inputClass}
                   />
-                  <DashboardInput
-                    label="Education"
-                    value={member.education}
-                    onChange={(value) => updateFacultyMember(index, 'education', value)}
-                    inputClass={inputClass}
-                  />
                   <DashboardTextarea
                     label="Short Summary"
                     value={member.summary ?? ''}
@@ -2065,14 +2294,15 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
                     richText={true}
                   />
                   <DashboardTextarea
-                    label="Full Bio"
-                    value={member.bio ?? ''}
-                    onChange={(value) => updateFacultyMember(index, 'bio', value)}
+                    label="Courses"
+                    value={member.courses ?? ''}
+                    onChange={(value) => updateFacultyMember(index, 'courses', value)}
                     textareaClass={textareaClass}
                     richText={true}
                   />
                 </div>
-              ))}
+                );
+              })}
             </div>
             <DashboardAddButton label="Add Faculty Member" onClick={addFacultyMember} />
           </DashboardSection>
@@ -2409,6 +2639,70 @@ export function Dashboard({ content, onSave, onSignOut, activeLocale, onChangeLo
             />
           </DashboardSection>
       </main>
+
+      {/* Backup Modal */}
+      {showBackupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Restore from Backup</h2>
+                <p className="text-xs text-gray-500">Last 10 backups are kept</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBackupModal(false)}
+                className="p-1 rounded hover:bg-gray-100"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingBackups ? (
+                <p className="text-sm text-gray-500 text-center py-4">Loading backups...</p>
+              ) : backups.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No backups found. Create one above.</p>
+              ) : (
+                <div className="space-y-2">
+                  {backups.map((backup) => (
+                    <div
+                      key={backup.id}
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded hover:bg-gray-50"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {backup.label || `Backup #${backup.id}`}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(backup.saved_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRestoreBackup(backup.id)}
+                        disabled={restoringBackup === backup.id}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-600 rounded hover:bg-blue-50 disabled:opacity-50"
+                      >
+                        {restoringBackup === backup.id ? (
+                          <>
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                            Restoring...
+                          </>
+                        ) : (
+                          <>
+                            <History className="h-3 w-3" />
+                            Restore
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2485,22 +2779,38 @@ type DashboardHeaderProps = {
   title: string;
   onRemove?: () => void;
   canRemove?: boolean;
+  onCopy?: () => void;
+  copyLabel?: string;
 };
 
-function DashboardHeader({ title, onRemove, canRemove = true }: DashboardHeaderProps) {
+function DashboardHeader({ title, onRemove, canRemove = true, onCopy, copyLabel }: DashboardHeaderProps) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-xs font-semibold uppercase text-gray-500">{title}</span>
-      {onRemove && canRemove && (
-        <button
-          type="button"
-          onClick={onRemove}
-          className="text-red-600 hover:text-red-700"
-          aria-label={`Remove ${title}`}
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      )}
+      <div className="flex items-center gap-2">
+        {onCopy && (
+          <button
+            type="button"
+            onClick={onCopy}
+            className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            aria-label={copyLabel ?? `Copy ${title}`}
+            title={copyLabel ?? `Copy to other language`}
+          >
+            <Copy className="h-4 w-4" />
+            <span className="text-xs">{copyLabel ?? 'Copy to other lang'}</span>
+          </button>
+        )}
+        {onRemove && canRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-red-600 hover:text-red-700"
+            aria-label={`Remove ${title}`}
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

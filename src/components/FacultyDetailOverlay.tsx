@@ -14,21 +14,19 @@ export function FacultyDetailOverlay({ faculty, localeLabel, onClose }: FacultyD
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // Trigger enter animation on mount
-    const id = window.setTimeout(() => setOpen(true), 10);
-    return () => window.clearTimeout(id);
+    // Trigger enter animation immediately
+    requestAnimationFrame(() => setOpen(true));
   }, []);
 
   const handleClose = () => {
-    // Animate out then notify parent to unmount
     setOpen(false);
-    window.setTimeout(() => onClose(), 200);
+    window.setTimeout(() => onClose(), 150);
   };
 
   return (
-    <div className={`fixed inset-0 z-[65] flex transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`fixed inset-0 z-[65] flex transition-opacity duration-150 ${open ? 'opacity-100' : 'opacity-0'}`}>
       <div className="flex-1 bg-black/60" onClick={handleClose} />
-      <aside className={`relative w-full max-w-3xl h-full bg-white overflow-y-auto border-l border-gray-200 transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`relative w-full max-w-3xl h-full bg-white overflow-y-auto border-l border-gray-200 transition-transform duration-150 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between">
           <div>
             <div className="flex items-center space-x-2 text-xs uppercase tracking-wide text-gray-500">
@@ -52,7 +50,7 @@ export function FacultyDetailOverlay({ faculty, localeLabel, onClose }: FacultyD
             <img
               src={faculty.photoDataUrl}
               alt={faculty.name}
-              className="w-full h-auto max-h-[70vh] max-w-md mx-auto object-contain border border-gray-200 bg-gray-100"
+              className="w-auto h-auto max-h-[20vh] sm:max-h-[50vh] md:max-h-[60vh] max-w-[150px] sm:max-w-xs md:max-w-md mx-auto object-contain border border-gray-200 bg-gray-100"
             />
           )}
           {faculty.summary && (
@@ -64,23 +62,26 @@ export function FacultyDetailOverlay({ faculty, localeLabel, onClose }: FacultyD
               />
             </div>
           )}
-          <div className="grid sm:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Specialty</h3>
-              <p className="text-sm text-gray-700">{faculty.specialty}</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Education</h3>
-              <p className="text-sm text-gray-700">{faculty.education}</p>
-            </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Specialty</h3>
+            <p className="text-sm text-gray-700">{faculty.specialty}</p>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-2">Profile</h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Research Focus</h3>
             <FormattedText
-              text={faculty.bio ?? faculty.research}
+              text={faculty.research}
               className="text-sm text-gray-700 leading-relaxed"
             />
           </div>
+          {faculty.courses && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Courses</h3>
+              <FormattedText
+                text={faculty.courses}
+                className="text-sm text-gray-700 leading-relaxed"
+              />
+            </div>
+          )}
         </div>
       </aside>
     </div>

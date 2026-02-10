@@ -1,0 +1,33 @@
+# robots.txt for MSc Bioinfo UoC
+
+User-agent: *
+Allow: /
+Disallow: /admin
+
+# Block aggressive crawlers/scrapers
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+# Crawl rate limit (respected by good bots)
+Crawl-delay: 10
+
+# Sitemap (uncomment and update when you have a domain)
+# Sitemap: https://yourdomain.com/sitemap.xml

@@ -137,6 +137,18 @@ function App() {
     setContent(next);
   };
 
+  const handleForceSync = async () => {
+    console.log('[App] Force sync requested, fetching from Supabase...');
+    const remote = await fetchSiteContent();
+    if (remote) {
+      console.log('[App] Force sync successful, updating content');
+      setContent(remote);
+    } else {
+      console.error('[App] Force sync failed - no data returned');
+      throw new Error('Failed to load content from database. Check console for details.');
+    }
+  };
+
   return (
     <Routes>
       <Route
@@ -145,6 +157,7 @@ function App() {
           <AdminPage
             content={content}
             onSaveContent={handleSaveContent}
+            onForceSync={handleForceSync}
             activeLocale={activeLocale}
             onChangeLocale={setActiveLocale}
           />
@@ -177,10 +190,12 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = localeContent.navLinks.map(link => {
-        const target = link.target.replace('#', '');
-        return { id: target, element: document.getElementById(target) };
-      }).filter(section => section.element);
+      const sections = (localeContent.navLinks ?? [])
+        .filter(link => link.target.startsWith('#'))
+        .map(link => {
+          const target = link.target.replace('#', '');
+          return { id: target, element: document.getElementById(target) };
+        }).filter(section => section.element);
 
       const scrollPosition = window.scrollY + 100; // offset for header height
 
@@ -254,8 +269,8 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
   );
 
   return (
-    <div className="min-h-screen bg-white">
-      <nav className="fixed top-0 w-full bg-white z-50 border-b border-gray-300 shadow-sm">
+    <div id="top" className="min-h-screen bg-white">
+      <nav className="fixed top-0 w-full bg-white/70 backdrop-blur-md z-50 border-b border-gray-200/50 shadow-sm">
         <div className="w-full py-1 lg:py-2 px-3 sm:px-5 lg:px-9">
           {/* Desktop single-line layout - only on very large screens */}
           <div className="hidden min-[1800px]:grid grid-cols-3 items-center h-[4.5rem] gap-8">
@@ -278,19 +293,23 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
             </a>
 
             <div className="flex items-center justify-center gap-8 2xl:gap-12">
-              {localeContent.navLinks.map((link) => (
-                <a
-                  key={`${link.target}-${link.label}`}
-                  href={link.target}
-                  className={`transition-colors font-medium text-sm whitespace-nowrap ${
-                    activeSection === link.target
-                      ? 'text-gray-900 border-b-2 border-gray-900'
-                      : 'text-gray-700 hover:text-gray-900'
-                  }`}
-                >
-                  {link.label}
-                </a>
-              ))}
+              {(localeContent.navLinks ?? []).map((link) => {
+                const isExternal = link.target.startsWith('http');
+                return (
+                  <a
+                    key={`${link.target}-${link.label}`}
+                    href={link.target}
+                    {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    className={`relative z-10 cursor-pointer transition-colors font-medium text-sm whitespace-nowrap ${
+                      !isExternal && activeSection === link.target
+                        ? 'text-gray-900 border-b-2 border-gray-900'
+                        : 'text-gray-700 hover:text-gray-900'
+                    }`}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
             </div>
 
             <div className="flex items-center justify-end gap-4">
@@ -326,19 +345,23 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
             </div>
 
             <div className="col-start-1 col-end-4 row-start-2 flex items-center justify-center gap-5 flex-wrap">
-              {localeContent.navLinks.map((link) => (
-                <a
-                  key={`${link.target}-${link.label}`}
-                  href={link.target}
-                  className={`transition-colors font-medium text-sm whitespace-nowrap ${
-                    activeSection === link.target
-                      ? 'text-gray-900 border-b-2 border-gray-900'
-                      : 'text-gray-700 hover:text-gray-900'
-                  }`}
-                >
-                  {link.label}
-                </a>
-              ))}
+              {(localeContent.navLinks ?? []).map((link) => {
+                const isExternal = link.target.startsWith('http');
+                return (
+                  <a
+                    key={`${link.target}-${link.label}`}
+                    href={link.target}
+                    {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    className={`relative z-10 cursor-pointer transition-colors font-medium text-sm whitespace-nowrap ${
+                      !isExternal && activeSection === link.target
+                        ? 'text-gray-900 border-b-2 border-gray-900'
+                        : 'text-gray-700 hover:text-gray-900'
+                    }`}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
             </div>
           </div>
 
@@ -376,19 +399,23 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
         {mobileMenuOpen && (
           <div className="lg:hidden bg-white border-t border-gray-200">
             <div className="mx-auto max-w-[82rem] px-4 py-3 space-y-3">
-              {localeContent.navLinks.map((link) => (
-                <a
-                  key={`${link.target}-${link.label}`}
-                  href={link.target}
-                  className={`block transition-colors font-medium ${
-                    activeSection === link.target
-                      ? 'text-gray-900 font-semibold'
-                      : 'text-gray-700 hover:text-gray-900'
-                  }`}
-                >
-                  {link.label}
-                </a>
-              ))}
+              {(localeContent.navLinks ?? []).map((link) => {
+                const isExternal = link.target.startsWith('http');
+                return (
+                  <a
+                    key={`${link.target}-${link.label}`}
+                    href={link.target}
+                    {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    className={`block cursor-pointer transition-colors font-medium ${
+                      !isExternal && activeSection === link.target
+                        ? 'text-gray-900 font-semibold'
+                        : 'text-gray-700 hover:text-gray-900'
+                    }`}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
               <div className="pt-2 border-t border-gray-200">
                 <LanguageSwitch value={activeLocale} onChange={(locale) => {
                   onChangeLocale(locale);
@@ -415,6 +442,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                   <a
                     href={badgeClickHref}
                     aria-label={badgeClickAriaLabel}
+                    {...(badgeClickHref.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                     className="flex items-center justify-center px-6 py-3 bg-gray-900 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
                   >
                     <span className="text-sm font-semibold uppercase tracking-wider">
@@ -445,6 +473,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
                   href={localeContent.hero.primaryCta.href}
+                  {...(localeContent.hero.primaryCta.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                   className="inline-flex items-center justify-center px-8 py-4 bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-colors"
                 >
                   {localeContent.hero.primaryCta.label}
@@ -452,6 +481,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                 </a>
                 <a
                   href={localeContent.hero.secondaryCta.href}
+                  {...(localeContent.hero.secondaryCta.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                   className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-semibold border-2 border-gray-900 hover:bg-gray-50 transition-colors"
                 >
                   {localeContent.hero.secondaryCta.label}
@@ -513,7 +543,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
           </div>
         </section>
 
-        <section id="about" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
+        <section id="curriculum" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
           <div className="max-w-6xl mx-auto">
             <div className="mb-16">
               <h2 className="text-4xl font-serif font-bold text-gray-900 mb-4">
@@ -841,7 +871,6 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                     <p className="text-sm text-gray-600 mb-1 uppercase tracking-wide line-clamp-2">{faculty.title}</p>
                     <p className="text-sm text-gray-700 font-medium mb-3 line-clamp-1">{faculty.specialty}</p>
                     <div className="border-t border-gray-300 pt-3 mt-3 text-sm text-gray-700">
-                      <p className="text-xs text-gray-600 mb-2 line-clamp-1">{faculty.education}</p>
                       <FormattedText
                         text={faculty.research}
                         className="line-clamp-2"
@@ -906,6 +935,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                     </div>
                     <a
                       href={card.ctaTarget}
+                      {...(card.ctaTarget.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                       className="inline-flex items-center text-gray-900 font-semibold hover:underline"
                     >
                       {card.ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />

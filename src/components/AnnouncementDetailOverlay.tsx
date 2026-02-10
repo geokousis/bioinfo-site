@@ -14,19 +14,19 @@ export function AnnouncementDetailOverlay({ announcement, localeLabel, onClose }
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const id = window.setTimeout(() => setOpen(true), 10);
-    return () => window.clearTimeout(id);
+    // Trigger enter animation immediately
+    requestAnimationFrame(() => setOpen(true));
   }, []);
 
   const handleClose = () => {
     setOpen(false);
-    window.setTimeout(() => onClose(), 200);
+    window.setTimeout(() => onClose(), 150);
   };
 
   return (
-    <div className={`fixed inset-0 z-[65] flex transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`fixed inset-0 z-[65] flex transition-opacity duration-150 ${open ? 'opacity-100' : 'opacity-0'}`}>
       <div className="flex-1 bg-black/60" onClick={handleClose} />
-      <aside className={`relative w-full max-w-3xl h-full bg-white overflow-y-auto border-l border-gray-200 transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`relative w-full max-w-3xl h-full bg-white overflow-y-auto border-l border-gray-200 transition-transform duration-150 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between">
           <div>
             <div className="flex items-center space-x-2 text-xs uppercase tracking-wide text-gray-500">

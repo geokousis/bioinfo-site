@@ -37,6 +37,7 @@ export type FacultyMember = {
   specialty: string;
   education: string;
   research: string;
+  courses?: string;
   summary?: string;
   bio?: string;
   photoDataUrl?: string;
