@@ -34,6 +34,7 @@ import type {
 } from '../types';
 import { iconOptions } from '../icons';
 import { deleteSiteAsset, uploadSiteAsset, saveContentBackup, fetchContentBackups, restoreContentBackup, type ContentBackup } from '../lib/contentService';
+import { resolveAppUrl } from '../lib/url';
 import { LanguageSwitch } from './LanguageSwitch';
 import { RichTextEditor } from './RichTextEditor';
 
@@ -1772,7 +1773,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
                   {/* Image preview */}
                   <div className="aspect-video w-full bg-gray-100 rounded overflow-hidden">
                     <img
-                      src={image.imageUrl}
+                      src={resolveAppUrl(image.imageUrl)}
                       alt={image.alt || image.caption || 'Gallery image'}
                       className="w-full h-full object-cover"
                     />

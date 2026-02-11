@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { GalleryImage } from '../types';
+import { resolveAppUrl } from '../lib/url';
 
 type ImageSlideshowProps = {
   images: GalleryImage[];
@@ -47,7 +48,7 @@ export function ImageSlideshow({ images, autoPlayInterval = 5000 }: ImageSlidesh
       {/* Main image display */}
       <div className="relative aspect-[16/9] w-full">
         <img
-          src={currentImage.imageUrl}
+          src={resolveAppUrl(currentImage.imageUrl)}
           alt={currentImage.alt || currentImage.caption || `Slide ${currentIndex + 1}`}
           className="w-full h-full object-cover transition-opacity duration-500"
         />

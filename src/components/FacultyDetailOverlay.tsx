@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 
 import type { FacultyMember } from '../types';
 import { FormattedText } from './FormattedText';
+import { resolveAppUrl } from '../lib/url';
 
 type FacultyDetailOverlayProps = {
   faculty: FacultyMember;
@@ -48,7 +49,7 @@ export function FacultyDetailOverlay({ faculty, localeLabel, onClose }: FacultyD
         <div className="px-6 py-6 space-y-6">
           {faculty.photoDataUrl && (
             <img
-              src={faculty.photoDataUrl}
+              src={resolveAppUrl(faculty.photoDataUrl)}
               alt={faculty.name}
               className="w-auto h-auto max-h-[20vh] sm:max-h-[50vh] md:max-h-[60vh] max-w-[150px] sm:max-w-xs md:max-w-md mx-auto object-contain border border-gray-200 bg-gray-100"
             />

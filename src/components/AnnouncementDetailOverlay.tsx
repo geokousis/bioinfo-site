@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 
 import type { AnnouncementItem } from '../types';
 import { FormattedText } from './FormattedText';
+import { resolveAppUrl } from '../lib/url';
 
 type AnnouncementDetailOverlayProps = {
   announcement: AnnouncementItem;
@@ -67,7 +68,7 @@ export function AnnouncementDetailOverlay({ announcement, localeLabel, onClose }
                 {announcement.attachments.map((attachment) => (
                   <a
                     key={attachment.id}
-                    href={attachment.dataUrl}
+                    href={resolveAppUrl(attachment.dataUrl)}
                     download={attachment.name}
                     className="flex items-center justify-between border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 hover:border-gray-900"
                   >

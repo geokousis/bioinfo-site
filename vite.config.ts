@@ -2,7 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // GitHub Pages project sites are served from /<repo>/, not /
+  base: process.env.VITE_BASE_PATH ?? (mode === 'production' ? '/bioinfo-site/' : '/'),
   plugins: [
     react(),
     {
@@ -27,4 +29,4 @@ export default defineConfig({
   server: {
     host: true,
   },
-});
+}));

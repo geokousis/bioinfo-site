@@ -27,6 +27,7 @@ import { FacultyDetailOverlay } from './components/FacultyDetailOverlay';
 import { RevealOnScroll } from './components/RevealOnScroll';
 import { ImageSlideshow } from './components/ImageSlideshow';
 import { FormattedText } from './components/FormattedText';
+import { resolveAppUrl } from './lib/url';
 
 type SelectedAnnouncement = {
   locale: LocaleCode;
@@ -187,6 +188,10 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
   const [activeSection, setActiveSection] = useState<string>('');
 
   const localeContent = content[activeLocale];
+  const homeHref = import.meta.env.BASE_URL;
+  const overlayLogoUrl = resolveAppUrl('/data/images/UoC_logo_overlay.png');
+  const whiteLogoUrl = resolveAppUrl('/data/images/UoC_logo_white.png');
+  const resolveNavHref = (target: string) => (target.startsWith('#') ? target : resolveAppUrl(target));
 
   useEffect(() => {
     const handleScroll = () => {
@@ -221,6 +226,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
 
   const badgeClickTarget = localeContent.hero.clickTarget;
   const badgeClickHref = badgeClickTarget?.href?.trim();
+  const resolvedBadgeClickHref = badgeClickHref ? resolveNavHref(badgeClickHref) : undefined;
   const badgeClickAriaLabel = badgeClickTarget?.ariaLabel?.trim() || localeContent.hero.badgeText;
 
   const handleSelectAnnouncement = (id: string) => {
@@ -274,10 +280,10 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
         <div className="w-full py-1 lg:py-2 px-3 sm:px-5 lg:px-9">
           {/* Desktop single-line layout - only on very large screens */}
           <div className="hidden min-[1800px]:grid grid-cols-3 items-center h-[4.5rem] gap-8">
-            <a href="/" className="flex items-center gap-3 min-w-0">
+            <a href={homeHref} className="flex items-center gap-3 min-w-0">
               <div className="h-[4rem] w-[4rem]">
                 <img
-                  src="/data/images/UoC_logo_overlay.png"
+                  src={overlayLogoUrl}
                   alt={`${localeContent.branding.institution} logo`}
                   className="h-full w-full object-contain"
                 />
@@ -298,7 +304,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                 return (
                   <a
                     key={`${link.target}-${link.label}`}
-                    href={link.target}
+                    href={resolveNavHref(link.target)}
                     {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                     className={`relative z-10 cursor-pointer transition-colors font-medium text-sm whitespace-nowrap ${
                       !isExternal && activeSection === link.target
@@ -320,12 +326,12 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
           {/* Medium screens: two-row layout */}
           <div className="hidden lg:grid min-[1800px]:hidden grid-cols-[auto_1fr_auto] grid-rows-[auto_auto] items-center gap-y-3 gap-x-4">
             <a
-              href="/"
+              href={homeHref}
               className="flex items-center gap-2.5 min-w-0 flex-shrink-0 col-start-1 col-end-2 row-start-1"
             >
               <div className="h-[3.4rem] w-[3.4rem]">
                 <img
-                  src="/data/images/UoC_logo_overlay.png"
+                  src={overlayLogoUrl}
                   alt={`${localeContent.branding.institution} logo`}
                   className="h-full w-full object-contain"
                 />
@@ -350,7 +356,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                 return (
                   <a
                     key={`${link.target}-${link.label}`}
-                    href={link.target}
+                    href={resolveNavHref(link.target)}
                     {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                     className={`relative z-10 cursor-pointer transition-colors font-medium text-sm whitespace-nowrap ${
                       !isExternal && activeSection === link.target
@@ -367,10 +373,10 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
 
           {/* Mobile: logo + menu button */}
           <div className="flex lg:hidden items-center justify-between">
-            <a href="/" className="flex items-center gap-2 min-w-0 flex-shrink-0">
+            <a href={homeHref} className="flex items-center gap-2 min-w-0 flex-shrink-0">
               <div className="h-[2.5rem] w-[2.5rem] sm:h-[3rem] sm:w-[3rem]">
                 <img
-                  src="/data/images/UoC_logo_overlay.png"
+                  src={overlayLogoUrl}
                   alt={`${localeContent.branding.institution} logo`}
                   className="h-full w-full object-contain"
                 />
@@ -404,7 +410,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                 return (
                   <a
                     key={`${link.target}-${link.label}`}
-                    href={link.target}
+                    href={resolveNavHref(link.target)}
                     {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                     className={`block cursor-pointer transition-colors font-medium ${
                       !isExternal && activeSection === link.target
@@ -440,7 +446,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
               <div className="inline-block mb-6">
                 {badgeClickHref ? (
                   <a
-                    href={badgeClickHref}
+                    href={resolvedBadgeClickHref}
                     aria-label={badgeClickAriaLabel}
                     {...(badgeClickHref.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                     className="flex items-center justify-center px-6 py-3 bg-gray-900 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
@@ -856,7 +862,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                   <div className="relative w-full overflow-hidden aspect-[3/4]">
                     {faculty.photoDataUrl ? (
                       <img
-                        src={faculty.photoDataUrl}
+                        src={resolveAppUrl(faculty.photoDataUrl)}
                         alt={faculty.name}
                         className="w-full h-full object-cover"
                       />
@@ -934,7 +940,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                       ))}
                     </div>
                     <a
-                      href={card.ctaTarget}
+                      href={resolveNavHref(card.ctaTarget)}
                       {...(card.ctaTarget.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                       className="inline-flex items-center text-gray-900 font-semibold hover:underline"
                     >
@@ -992,7 +998,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
             <div className="flex items-center space-x-1.5 mb-4 md:mb-0">
               <div className="h-12 w-12">
                 <img
-                  src="/data/images/UoC_logo_white.png"
+                  src={whiteLogoUrl}
                   alt={`${localeContent.branding.institution} logo`}
                   className="h-full w-full object-contain"
                 />
