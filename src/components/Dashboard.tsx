@@ -1,4 +1,4 @@
-import { ChangeEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ChevronDown,
@@ -100,10 +100,6 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
   const localeContent = workingContent[activeLocale];
   const inputClass = 'w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900';
   const textareaClass = 'w-full rounded border border-gray-300 px-3 py-2 text-sm h-28 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900';
-
-  if (!localeContent) {
-    return null;
-  }
 
   const applyUpdate = (mutator: (draft: SiteContent) => void) => {
     setWorkingContent((prev) => {
@@ -229,21 +225,17 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
     }
   };
 
-  const undoButtonClass = useMemo(
-    () =>
-      canUndo
-        ? 'inline-flex items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100'
-        : 'inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-400 cursor-not-allowed',
-    [canUndo],
-  );
+  const undoButtonClass = canUndo
+    ? 'inline-flex items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100'
+    : 'inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-400 cursor-not-allowed';
 
-  const saveButtonClass = useMemo(
-    () =>
-      isDirty && !isSaving
-        ? 'inline-flex items-center justify-center gap-2 rounded-full border border-gray-900 bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-gray-800'
-        : 'inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-400 cursor-not-allowed',
-    [isDirty, isSaving],
-  );
+  const saveButtonClass = isDirty && !isSaving
+    ? 'inline-flex items-center justify-center gap-2 rounded-full border border-gray-900 bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-gray-800'
+    : 'inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-400 cursor-not-allowed';
+
+  if (!localeContent) {
+    return null;
+  }
 
   const addNavLink = () => {
     updateActiveLocale((locale) => ({
@@ -288,7 +280,8 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
       const trimmedLabel = (next.ariaLabel ?? '').trim();
 
       if (!trimmedHref && !trimmedLabel) {
-        const { clickTarget: _unused, ...restHero } = locale.hero;
+        const restHero = { ...locale.hero };
+        delete restHero.clickTarget;
         return {
           ...locale,
           hero: {

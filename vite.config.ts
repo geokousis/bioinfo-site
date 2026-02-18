@@ -27,6 +27,6 @@ export default defineConfig(({ mode }) => ({
     exclude: ['lucide-react'],
   },
   server: {
-    host: true,
+    host: process.env.VITE_DEV_HOST ?? '127.0.0.1',
   },
 }));
