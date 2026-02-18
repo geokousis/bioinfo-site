@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "save:content": "node scripts/save-content.mjs"
+    "save:content": "node scripts/save-content.mjs",
+    "build:pages": "VITE_BASE_PATH=/bioinfo-site/ vite build --outDir docs && node scripts/prepare-pages.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

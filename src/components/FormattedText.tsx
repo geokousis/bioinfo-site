@@ -1,4 +1,3 @@
-import DOMPurify from 'dompurify';
 import { useMemo } from 'react';
 
 type FormattedTextProps = {
@@ -6,12 +5,73 @@ type FormattedTextProps = {
   className?: string;
 };
 
-// Configure DOMPurify to allow safe tags only
-const ALLOWED_TAGS = [
+// Allowlist of safe HTML tags/attributes for formatted content.
+const ALLOWED_TAGS = new Set([
   'strong', 'b', 'em', 'i', 'u', 'br', 'p', 'span', 'div',
-  'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
-];
-const ALLOWED_ATTR = ['href', 'target', 'rel', 'class', 'style'];
+  'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+]);
+const ALLOWED_ATTR = new Set(['href', 'target', 'rel', 'class', 'style']);
+
+const SAFE_HREF_PATTERN = /^(https?:\/\/|mailto:|tel:|\/|#)/i;
+
+const sanitizeHtml = (html: string): string => {
+  if (typeof window === 'undefined') {
+    return html;
+  }
+
+  const container = document.createElement('div');
+  container.innerHTML = html;
+
+  const sanitizeNode = (node: Node) => {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === Node.COMMENT_NODE) {
+        child.remove();
+        continue;
+      }
+
+      if (child.nodeType !== Node.ELEMENT_NODE) {
+        continue;
+      }
+
+      const element = child as HTMLElement;
+      const tagName = element.tagName.toLowerCase();
+
+      if (!ALLOWED_TAGS.has(tagName)) {
+        const fragment = document.createDocumentFragment();
+        while (element.firstChild) {
+          fragment.appendChild(element.firstChild);
+        }
+        element.replaceWith(fragment);
+        sanitizeNode(fragment);
+        continue;
+      }
+
+      for (const attribute of Array.from(element.attributes)) {
+        const attrName = attribute.name.toLowerCase();
+        if (!ALLOWED_ATTR.has(attrName)) {
+          element.removeAttribute(attribute.name);
+          continue;
+        }
+
+        if (attrName === 'href' && !SAFE_HREF_PATTERN.test(attribute.value.trim())) {
+          element.removeAttribute('href');
+        }
+      }
+
+      if (tagName === 'a') {
+        element.setAttribute('rel', 'noopener noreferrer');
+        if (!element.getAttribute('target')) {
+          element.setAttribute('target', '_blank');
+        }
+      }
+
+      sanitizeNode(element);
+    }
+  };
+
+  sanitizeNode(container);
+  return container.innerHTML;
+};
 
 export function FormattedText({ text, className = '' }: FormattedTextProps) {
   const formattedHtml = useMemo(() => {
@@ -37,14 +97,7 @@ export function FormattedText({ text, className = '' }: FormattedTextProps) {
       result = result.replace(/\n/g, '<br />');
     }
 
-    // Sanitize HTML to prevent XSS attacks
-    const sanitized = DOMPurify.sanitize(result, {
-      ALLOWED_TAGS,
-      ALLOWED_ATTR,
-      ALLOW_DATA_ATTR: false,
-    });
-
-    return sanitized;
+    return sanitizeHtml(result);
   }, [text]);
 
   return (
