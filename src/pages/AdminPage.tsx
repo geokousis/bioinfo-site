@@ -117,7 +117,20 @@ export function AdminPage({
   };
 
   if (!client) {
-    return <div className="min-h-screen bg-white" />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+        <div className="w-full max-w-xl bg-white border border-gray-200 shadow-sm p-6 space-y-3">
+          <h1 className="text-lg font-semibold text-gray-900">Admin Unavailable</h1>
+          <p className="text-sm text-gray-700">
+            Supabase is not configured in this build.
+          </p>
+          <p className="text-xs text-gray-600">
+            Set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in GitHub Actions secrets,
+            then redeploy.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (loading && !session) {
