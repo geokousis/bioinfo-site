@@ -1,10 +1,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+const githubRepoName = process.env.GITHUB_REPOSITORY?.split('/')[1];
+const githubPagesBase = githubRepoName ? `/${githubRepoName}/` : '/';
+const defaultProdBase = process.env.GITHUB_ACTIONS ? githubPagesBase : '/';
+
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  // GitHub Pages project sites are served from /<repo>/, not /
-  base: process.env.VITE_BASE_PATH ?? (mode === 'production' ? '/bioinfo-site/' : '/'),
+export default defineConfig(() => ({
+  base: process.env.VITE_BASE_PATH ?? defaultProdBase,
   plugins: [
     react(),
     {
