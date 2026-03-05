@@ -49,6 +49,21 @@ type DashboardProps = {
 
 const CLONE = <T,>(data: T): T => JSON.parse(JSON.stringify(data));
 const MAX_HISTORY = 20;
+const DASHBOARD_SECTIONS = [
+  { id: 'admin-branding', label: 'Branding' },
+  { id: 'admin-navigation', label: 'Navigation' },
+  { id: 'admin-hero', label: 'Hero' },
+  { id: 'admin-program-statistics', label: 'Program Stats' },
+  { id: 'admin-announcements', label: 'Announcements' },
+  { id: 'admin-about-highlights', label: 'About' },
+  { id: 'admin-gallery-slideshow', label: 'Gallery' },
+  { id: 'admin-curriculum', label: 'Curriculum' },
+  { id: 'admin-research-areas', label: 'Research' },
+  { id: 'admin-faculty', label: 'Faculty' },
+  { id: 'admin-admissions', label: 'Admissions' },
+  { id: 'admin-contact', label: 'Contact' },
+  { id: 'admin-footer', label: 'Footer' },
+] as const;
 
 const deepEqual = (a: SiteContent, b: SiteContent) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -64,6 +79,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
   const [loadingBackups, setLoadingBackups] = useState(false);
   const [restoringBackup, setRestoringBackup] = useState<number | null>(null);
   const [creatingBackup, setCreatingBackup] = useState(false);
+  const [activeAdminSection, setActiveAdminSection] = useState('admin-branding');
 
   // Track the last synced content from props to detect external changes
   const lastSyncedContentRef = useRef<string>(JSON.stringify(content));
@@ -128,6 +144,43 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
   };
 
   const canUndo = undoStack.length > 0;
+
+  useEffect(() => {
+    const sectionObserver = new IntersectionObserver(
+      (entries) => {
+        const visibleSection = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+
+        if (visibleSection?.target.id) {
+          setActiveAdminSection(visibleSection.target.id);
+        }
+      },
+      { rootMargin: '-180px 0px -60% 0px', threshold: [0.1, 0.4] },
+    );
+
+    DASHBOARD_SECTIONS.forEach((section) => {
+      const element = document.getElementById(section.id);
+      if (element) {
+        sectionObserver.observe(element);
+      }
+    });
+
+    return () => {
+      sectionObserver.disconnect();
+    };
+  }, [activeLocale]);
+
+  const scrollToSection = (sectionId: string) => {
+    const target = document.getElementById(sectionId);
+    if (!target) {
+      return;
+    }
+
+    setActiveAdminSection(sectionId);
+    const offsetTop = target.getBoundingClientRect().top + window.scrollY - 205;
+    window.scrollTo({ top: Math.max(offsetTop, 0), behavior: 'smooth' });
+  };
 
   const handleUndo = () => {
     if (!canUndo) {
@@ -1343,9 +1396,47 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
         {saveError && (
           <div className="max-w-5xl mx-auto px-6 pb-4 text-xs text-red-600">{saveError}</div>
         )}
+        <div className="border-t border-gray-200 bg-white/95 backdrop-blur-sm">
+          <div className="max-w-5xl mx-auto px-6 py-2">
+            <div className="hidden sm:flex items-center gap-2 overflow-x-auto pb-1">
+              {DASHBOARD_SECTIONS.map((section) => {
+                const isActive = section.id === activeAdminSection;
+                return (
+                  <button
+                    key={section.id}
+                    type="button"
+                    onClick={() => scrollToSection(section.id)}
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                      isActive
+                        ? 'bg-gray-900 text-white'
+                        : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100'
+                    }`}
+                    aria-current={isActive ? 'true' : undefined}
+                  >
+                    {section.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="sm:hidden">
+              <label className="block text-[11px] font-semibold uppercase text-gray-500 mb-1">Jump to section</label>
+              <select
+                value={activeAdminSection}
+                onChange={(event) => scrollToSection(event.target.value)}
+                className={inputClass}
+              >
+                {DASHBOARD_SECTIONS.map((section) => (
+                  <option key={section.id} value={section.id}>
+                    {section.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
       </header>
       <main className="max-w-5xl mx-auto px-6 py-6 space-y-6">
-          <DashboardSection title="Branding">
+          <DashboardSection title="Branding" sectionId="admin-branding">
             <DashboardInput
               label="Institution Name"
               value={localeContent.branding.institution}
@@ -1370,7 +1461,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             />
           </DashboardSection>
 
-          <DashboardSection title="Navigation">
+          <DashboardSection title="Navigation" sectionId="admin-navigation">
             <div className="space-y-4">
               {(localeContent.navLinks ?? []).map((link, index) => {
                 const navLinks = localeContent.navLinks ?? [];
@@ -1430,7 +1521,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             <DashboardAddButton label="Add Link" onClick={addNavLink} />
           </DashboardSection>
 
-          <DashboardSection title="Hero">
+          <DashboardSection title="Hero" sectionId="admin-hero">
             <DashboardInput
               label="Badge Text"
               value={localeContent.hero.badgeText}
@@ -1527,7 +1618,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             </p>
           </DashboardSection>
 
-          <DashboardSection title="Program Statistics">
+          <DashboardSection title="Program Statistics" sectionId="admin-program-statistics">
             <div className="space-y-3">
               {localeContent.stats.map((stat, index) => (
                 <div key={`stat-${index}`} className="grid grid-cols-[1fr_auto_auto] gap-2 items-center bg-white border border-gray-200 rounded-md p-3">
@@ -1555,7 +1646,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             <DashboardAddButton label="Add Metric" onClick={addStat} />
           </DashboardSection>
 
-          <DashboardSection title="Announcements">
+          <DashboardSection title="Announcements" sectionId="admin-announcements">
             <DashboardInput
               label="Section Title"
               value={localeContent.announcements.title}
@@ -1655,7 +1746,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             <DashboardAddButton label="Add Announcement" onClick={addAnnouncement} />
           </DashboardSection>
 
-          <DashboardSection title="About Highlights">
+          <DashboardSection title="About Highlights" sectionId="admin-about-highlights">
             <DashboardInput
               label="Section Title"
               value={localeContent.about.title}
@@ -1714,7 +1805,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             <DashboardAddButton label="Add Highlight" onClick={addHighlight} />
           </DashboardSection>
 
-          <DashboardSection title="Gallery / Slideshow">
+          <DashboardSection title="Gallery / Slideshow" sectionId="admin-gallery-slideshow">
             <DashboardInput
               label="Section Title"
               value={localeContent.gallery?.title || ''}
@@ -1807,7 +1898,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             </label>
           </DashboardSection>
 
-          <DashboardSection title="Curriculum">
+          <DashboardSection title="Curriculum" sectionId="admin-curriculum">
             <DashboardInput
               label="Section Title"
               value={localeContent.curriculum.title}
@@ -2094,7 +2185,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             <DashboardAddButton label="Add Credit Item" onClick={addCreditBreakdownItem} />
           </DashboardSection>
 
-          <DashboardSection title="Research Areas">
+          <DashboardSection title="Research Areas" sectionId="admin-research-areas">
             <DashboardInput
               label="Section Title"
               value={localeContent.research.title}
@@ -2152,7 +2243,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             <DashboardAddButton label="Add Research Area" onClick={addResearchArea} />
           </DashboardSection>
 
-          <DashboardSection title="Faculty">
+          <DashboardSection title="Faculty" sectionId="admin-faculty">
             <DashboardInput
               label="Section Title"
               value={localeContent.faculty.title}
@@ -2301,7 +2392,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             <DashboardAddButton label="Add Faculty Member" onClick={addFacultyMember} />
           </DashboardSection>
 
-          <DashboardSection title="Admissions">
+          <DashboardSection title="Admissions" sectionId="admin-admissions">
             <DashboardInput
               label="Section Title"
               value={localeContent.admissions.title}
@@ -2425,7 +2516,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             </div>
           </DashboardSection>
 
-          <DashboardSection title="Contact">
+          <DashboardSection title="Contact" sectionId="admin-contact">
             <DashboardInput
               label="Section Title"
               value={localeContent.contact.title}
@@ -2586,7 +2677,7 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
             />
           </DashboardSection>
 
-          <DashboardSection title="Footer">
+          <DashboardSection title="Footer" sectionId="admin-footer">
             <DashboardInput
               label="Institution"
               value={localeContent.footer.institution}
@@ -2703,17 +2794,18 @@ export function Dashboard({ content, onSave, onSignOut, onForceSync, activeLocal
 
 type DashboardSectionProps = {
   title: string;
+  sectionId: string;
   children: ReactNode;
 };
 
-function DashboardSection({ title, children }: DashboardSectionProps) {
+function DashboardSection({ title, sectionId, children }: DashboardSectionProps) {
   return (
-    <div className="border border-gray-200 rounded-md bg-white">
+    <section id={sectionId} className="border border-gray-200 rounded-md bg-white scroll-mt-56">
       <div className="px-4 py-3 border-b border-gray-200">
         <p className="text-sm font-semibold text-gray-900">{title}</p>
       </div>
       <div className="px-4 py-4 space-y-4">{children}</div>
-    </div>
+    </section>
   );
 }
 

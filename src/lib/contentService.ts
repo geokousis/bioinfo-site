@@ -1,5 +1,6 @@
 import type { LocaleCode, SiteContent } from '../types';
 import { supabase } from './supabaseClient';
+import { debugLog } from './logger';
 
 const TABLE_NAME = 'site_content';
 const STORAGE_BUCKET = 'site-assets';
@@ -95,7 +96,7 @@ export async function fetchSiteContent(): Promise<SiteContent | null> {
     return null;
   }
 
-  console.log('[Supabase] Fetching site content...');
+  debugLog('[Supabase] Fetching site content...');
 
   const { data, error } = await supabase
     .from(TABLE_NAME)
@@ -111,7 +112,7 @@ export async function fetchSiteContent(): Promise<SiteContent | null> {
     return null;
   }
 
-  console.log('[Supabase] Loaded', data.length, 'locale(s) from database');
+  debugLog('[Supabase] Loaded', data.length, 'locale(s) from database');
 
   const result: Partial<SiteContent> = {};
 
@@ -228,7 +229,7 @@ export async function saveContentBackup(content: SiteContent, label?: string): P
     throw new Error(`Failed to save backup: ${error.message}`);
   }
 
-  console.log('[Supabase] Content backup saved');
+  debugLog('[Supabase] Content backup saved');
 }
 
 export async function fetchContentBackups(): Promise<ContentBackup[]> {

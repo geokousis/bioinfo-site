@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import {
   ArrowRight,
@@ -20,14 +20,18 @@ import type {
 import { iconMap } from './icons';
 import { STORAGE_KEY, initialContent, localeLabels } from './content';
 import { fetchSiteContent } from './lib/contentService';
+import { debugLog } from './lib/logger';
 import { LanguageSwitch } from './components/LanguageSwitch';
-import { AdminPage } from './pages/AdminPage';
 import { AnnouncementDetailOverlay } from './components/AnnouncementDetailOverlay';
 import { FacultyDetailOverlay } from './components/FacultyDetailOverlay';
 import { RevealOnScroll } from './components/RevealOnScroll';
 import { ImageSlideshow } from './components/ImageSlideshow';
 import { FormattedText } from './components/FormattedText';
 import { resolveAppUrl } from './lib/url';
+
+const LazyAdminPage = lazy(() =>
+  import('./pages/AdminPage').then((module) => ({ default: module.AdminPage })),
+);
 
 type SelectedAnnouncement = {
   locale: LocaleCode;
@@ -139,10 +143,10 @@ function App() {
   };
 
   const handleForceSync = async () => {
-    console.log('[App] Force sync requested, fetching from Supabase...');
+    debugLog('[App] Force sync requested, fetching from Supabase...');
     const remote = await fetchSiteContent();
     if (remote) {
-      console.log('[App] Force sync successful, updating content');
+      debugLog('[App] Force sync successful, updating content');
       setContent(remote);
     } else {
       console.error('[App] Force sync failed - no data returned');
@@ -155,13 +159,21 @@ function App() {
       <Route
         path="/admin"
         element={
-          <AdminPage
-            content={content}
-            onSaveContent={handleSaveContent}
-            onForceSync={handleForceSync}
-            activeLocale={activeLocale}
-            onChangeLocale={setActiveLocale}
-          />
+          <Suspense
+            fallback={
+              <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-600">
+                <p className="text-sm">Loading admin...</p>
+              </div>
+            }
+          >
+            <LazyAdminPage
+              content={content}
+              onSaveContent={handleSaveContent}
+              onForceSync={handleForceSync}
+              activeLocale={activeLocale}
+              onChangeLocale={setActiveLocale}
+            />
+          </Suspense>
         }
       />
       <Route
@@ -277,11 +289,11 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
   return (
     <div id="top" className="min-h-screen bg-white">
       <nav className="fixed top-0 w-full bg-white/70 backdrop-blur-md z-50 border-b border-gray-200/50 shadow-sm">
-        <div className="w-full py-1 lg:py-2 px-3 sm:px-5 lg:px-9">
+        <div className="w-full py-1 lg:py-1.5 px-3 sm:px-5 lg:px-9">
           {/* Desktop single-line layout - only on very large screens */}
-          <div className="hidden min-[1800px]:grid grid-cols-3 items-center h-[4.5rem] gap-8">
-            <a href={homeHref} className="flex items-center gap-3 min-w-0">
-              <div className="h-[4rem] w-[4rem]">
+          <div className="hidden min-[1200px]:grid grid-cols-[minmax(220px,300px)_minmax(0,1fr)_minmax(220px,300px)] xl:grid-cols-[minmax(240px,340px)_minmax(0,1fr)_minmax(240px,340px)] items-center min-h-[4rem] py-1 gap-3 xl:gap-5">
+            <a href={homeHref} className="inline-flex w-fit items-center gap-2.5 min-w-0 justify-self-start self-center">
+              <div className="h-[3.1rem] w-[3.1rem]">
                 <img
                   src={overlayLogoUrl}
                   alt={`${localeContent.branding.institution} logo`}
@@ -289,33 +301,35 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                 />
               </div>
               <div className="flex flex-col text-left leading-tight min-w-0">
-                <span className="text-[0.65rem] font-semibold text-gray-600 uppercase tracking-wide truncate">
+                <span className="text-[0.5rem] font-semibold text-gray-600 uppercase tracking-wide truncate">
                   {localeContent.branding.institution}
                 </span>
-                <span className="text-base font-serif font-bold text-gray-900 truncate">
+                <span className="text-[0.72rem] font-serif font-bold text-gray-900 truncate">
                   {localeContent.branding.program}
                 </span>
               </div>
             </a>
 
-            <div className="flex items-center justify-center gap-8 2xl:gap-12">
-              {(localeContent.navLinks ?? []).map((link) => {
-                const isExternal = link.target.startsWith('http');
-                return (
-                  <a
-                    key={`${link.target}-${link.label}`}
-                    href={resolveNavHref(link.target)}
-                    {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    className={`relative z-10 cursor-pointer transition-colors font-medium text-sm whitespace-nowrap ${
-                      !isExternal && activeSection === link.target
-                        ? 'text-gray-900 border-b-2 border-gray-900'
-                        : 'text-gray-700 hover:text-gray-900'
-                    }`}
-                  >
-                    {link.label}
-                  </a>
-                );
-              })}
+            <div className="min-w-0 px-1">
+              <div className="mx-auto flex w-full flex-wrap items-center justify-center gap-x-3 xl:gap-x-4 2xl:gap-x-6 gap-y-0.5">
+                {(localeContent.navLinks ?? []).map((link) => {
+                  const isExternal = link.target.startsWith('http');
+                  return (
+                    <a
+                      key={`${link.target}-${link.label}`}
+                      href={resolveNavHref(link.target)}
+                      {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    className={`relative z-10 cursor-pointer transition-colors motion-standard font-normal text-[0.78rem] xl:text-[0.84rem] 2xl:text-[0.9rem] whitespace-nowrap ${
+                        !isExternal && activeSection === link.target
+                          ? 'text-gray-900 border-b-2 border-gray-900'
+                          : 'text-gray-700 hover:text-gray-900'
+                      }`}
+                    >
+                      {link.label}
+                    </a>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-4">
@@ -324,12 +338,12 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
           </div>
 
           {/* Medium screens: two-row layout */}
-          <div className="hidden lg:grid min-[1800px]:hidden grid-cols-[auto_1fr_auto] grid-rows-[auto_auto] items-center gap-y-3 gap-x-4">
+          <div className="hidden lg:grid min-[1200px]:hidden grid-cols-[auto_1fr_auto] grid-rows-[auto_auto] items-center gap-y-[0.1rem] gap-x-3">
             <a
               href={homeHref}
-              className="flex items-center gap-2.5 min-w-0 flex-shrink-0 col-start-1 col-end-2 row-start-1"
+              className="inline-flex w-fit items-center gap-2.5 min-w-0 flex-shrink-0 col-start-1 col-end-2 row-start-1 justify-self-start self-center"
             >
-              <div className="h-[3.4rem] w-[3.4rem]">
+              <div className="h-[3.1rem] w-[3.1rem]">
                 <img
                   src={overlayLogoUrl}
                   alt={`${localeContent.branding.institution} logo`}
@@ -337,10 +351,10 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                 />
               </div>
               <div className="flex flex-col text-left leading-tight min-w-0">
-                <span className="text-[0.55rem] font-semibold text-gray-600 uppercase tracking-wide truncate">
+                <span className="text-[0.5rem] font-semibold text-gray-600 uppercase tracking-wide truncate">
                   {localeContent.branding.institution}
                 </span>
-                <span className="text-xs font-serif font-bold text-gray-900 truncate">
+                <span className="text-[0.72rem] font-serif font-bold text-gray-900 truncate">
                   {localeContent.branding.program}
                 </span>
               </div>
@@ -350,7 +364,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
               <LanguageSwitch value={activeLocale} onChange={onChangeLocale} />
             </div>
 
-            <div className="col-start-1 col-end-4 row-start-2 flex items-center justify-center gap-5 flex-wrap">
+            <div className="col-start-1 col-end-4 row-start-2 flex items-center justify-center gap-2.5 xl:gap-3.5 flex-wrap">
               {(localeContent.navLinks ?? []).map((link) => {
                 const isExternal = link.target.startsWith('http');
                 return (
@@ -358,7 +372,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                     key={`${link.target}-${link.label}`}
                     href={resolveNavHref(link.target)}
                     {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    className={`relative z-10 cursor-pointer transition-colors font-medium text-sm whitespace-nowrap ${
+                    className={`relative z-10 cursor-pointer transition-colors motion-standard font-normal text-[0.8rem] xl:text-[0.86rem] whitespace-nowrap leading-tight ${
                       !isExternal && activeSection === link.target
                         ? 'text-gray-900 border-b-2 border-gray-900'
                         : 'text-gray-700 hover:text-gray-900'
@@ -404,7 +418,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
 
         {mobileMenuOpen && (
           <div className="lg:hidden bg-white border-t border-gray-200">
-            <div className="mx-auto max-w-[82rem] px-4 py-3 space-y-3">
+            <div className="mx-auto max-w-[1320px] 2xl:max-w-[1560px] px-4 py-3 space-y-3">
               {(localeContent.navLinks ?? []).map((link) => {
                 const isExternal = link.target.startsWith('http');
                 return (
@@ -412,7 +426,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                     key={`${link.target}-${link.label}`}
                     href={resolveNavHref(link.target)}
                     {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    className={`block cursor-pointer transition-colors font-medium ${
+                    className={`block cursor-pointer transition-colors motion-standard font-normal ${
                       !isExternal && activeSection === link.target
                         ? 'text-gray-900 font-semibold'
                         : 'text-gray-700 hover:text-gray-900'
@@ -441,7 +455,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
             <div className="absolute inset-0 bg-[radial-gradient(circle_600px_at_30%_20%,rgba(255,255,255,0.8),rgba(255,255,255,0))]" />
             <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-white via-white/80 to-transparent" />
           </div>
-          <div className="relative max-w-[82rem] mx-auto">
+          <div className="relative max-w-[1320px] 2xl:max-w-[1560px] mx-auto">
             <div className="text-center mb-12">
               <div className="inline-block mb-6">
                 {badgeClickHref ? (
@@ -463,7 +477,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                   </div>
                 )}
               </div>
-              <h1 className="text-[3.3rem] lg:text-[4.2rem] font-serif font-bold text-gray-900 mb-5 leading-tight">
+              <h1 className="text-[2.45rem] sm:text-[3.2rem] lg:text-[3.65rem] 2xl:text-[4.2rem] font-serif font-bold text-gray-900 mb-5 leading-tight [overflow-wrap:anywhere]">
                 {localeContent.hero.title.split('\n').map((line, index) => (
                   <span key={index} className="block">
                     {line}
@@ -480,7 +494,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                 <a
                   href={localeContent.hero.primaryCta.href}
                   {...(localeContent.hero.primaryCta.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                  className="inline-flex items-center justify-center px-8 py-4 bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-colors"
+                  className="inline-flex items-center justify-center px-8 py-4 bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-colors motion-standard"
                 >
                   {localeContent.hero.primaryCta.label}
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -488,7 +502,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                 <a
                   href={localeContent.hero.secondaryCta.href}
                   {...(localeContent.hero.secondaryCta.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                  className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-semibold border-2 border-gray-900 hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-semibold border-2 border-gray-900 hover:bg-gray-50 transition-colors motion-standard"
                 >
                   {localeContent.hero.secondaryCta.label}
                 </a>
@@ -498,7 +512,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
             <div className="grid md:grid-cols-3 gap-6 mt-16 max-w-5xl mx-auto">
               {localeContent.stats.map((stat, index) => (
                 <RevealOnScroll key={`${stat.label}-${index}`} delayMs={index * 80}>
-                  <div className="bg-white border border-gray-300 p-6 text-center">
+                  <div className="ui-card p-6 text-center">
                     <div className="text-[2.6rem] font-serif font-bold text-gray-900 mb-2">{stat.value}</div>
                     <div className="text-sm text-gray-600 uppercase tracking-wide">{stat.label}</div>
                   </div>
@@ -524,10 +538,6 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                   {localeContent.announcements.description}
                 </p>
               </div>
-              <span className="inline-flex items-center text-sm font-semibold text-gray-600 bg-gray-100 px-4 py-2">
-                {localeContent.announcements.items.length} active
-                {localeContent.announcements.items.length === 1 ? ' update' : ' updates'}
-              </span>
             </div>
 
             {localeContent.announcements.items.length === 0 ? (
@@ -551,7 +561,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
 
         <section id="curriculum" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
           <div className="max-w-6xl mx-auto">
-            <div className="mb-16">
+            <div className="section-intro">
               <h2 className="text-4xl font-serif font-bold text-gray-900 mb-4">
                 {localeContent.about.title}
               </h2>
@@ -588,7 +598,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
         {localeContent.gallery && localeContent.gallery.images.length > 0 && (
           <section id="gallery" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 border-b border-gray-200">
             <div className="max-w-6xl mx-auto">
-              <div className="mb-12">
+              <div className="section-intro">
                 <h2 className="text-4xl font-serif font-bold text-gray-900 mb-4">
                   {localeContent.gallery.title}
                 </h2>
@@ -608,7 +618,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
 
         <section id="program" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
           <div className="max-w-6xl mx-auto">
-            <div className="mb-16">
+            <div className="section-intro">
               <h2 className="text-4xl font-serif font-bold text-gray-900 mb-4">
                 {localeContent.curriculum.title}
               </h2>
@@ -620,7 +630,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
             </div>
 
             <div className="grid lg:grid-cols-2 gap-8 mb-12">
-              <div className="bg-white border border-gray-300 p-8">
+              <div className="ui-card p-8">
                 <div className="flex items-start mb-6 pb-4 border-b border-gray-300">
                   <BookOpen className="h-7 w-7 text-gray-900 mr-3 mt-1" />
                   <div>
@@ -656,7 +666,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-300 p-8">
+              <div className="ui-card p-8">
                 <div className="flex items-start mb-6 pb-4 border-b border-gray-300">
                   <BookOpen className="h-7 w-7 text-gray-900 mr-3 mt-1" />
                   <div>
@@ -729,7 +739,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                   {localeContent.curriculum.semesters.map((sem, semIndex) => {
                     const isSemesterOpen = !!openSemesters[semIndex];
                     return (
-                      <div key={`sem-${semIndex}`} className="bg-white border border-gray-300">
+                      <div key={`sem-${semIndex}`} className="ui-card">
                         <button
                           type="button"
                           onClick={() => toggleSemester(semIndex)}
@@ -807,7 +817,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
 
         <section id="research" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
           <div className="max-w-6xl mx-auto">
-            <div className="mb-16">
+            <div className="section-intro">
               <h2 className="text-4xl font-serif font-bold text-gray-900 mb-4">
                 {localeContent.research.title}
               </h2>
@@ -823,7 +833,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                 const IconComponent = iconMap[area.icon];
                 return (
                   <RevealOnScroll key={`${area.title}-${index}`} delayMs={index * 80}>
-                    <div className="bg-gray-50 border border-gray-300 p-6 hover:border-gray-900 transition-colors transition-transform hover:-translate-y-0.5 hover:shadow-md">
+                    <div className="ui-card ui-card-interactive p-6">
                       <IconComponent className="h-8 w-8 text-gray-900 mb-4" />
                       <h3 className="text-lg font-bold text-gray-900 mb-3">{area.title}</h3>
                       <FormattedText
@@ -840,7 +850,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
 
         <section id="faculty" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 border-b border-gray-200">
           <div className="max-w-6xl mx-auto">
-            <div className="mb-16">
+            <div className="section-intro">
               <h2 className="text-4xl font-serif font-bold text-gray-900 mb-4">
                 {localeContent.faculty.title}
               </h2>
@@ -851,19 +861,21 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
               />
             </div>
 
-            <div className="grid md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
               {localeContent.faculty.members.map((faculty, index) => (
                 <button
                   key={`${faculty.name}-${index}`}
                   type="button"
                   onClick={() => handleSelectFaculty(index)}
-                  className="text-left bg-white border border-gray-300 hover:border-gray-900 transition-colors overflow-hidden flex flex-col"
+                  className="text-left ui-card ui-card-interactive overflow-hidden flex flex-col"
                 >
                   <div className="relative w-full overflow-hidden aspect-[3/4]">
                     {faculty.photoDataUrl ? (
                       <img
                         src={resolveAppUrl(faculty.photoDataUrl)}
                         alt={faculty.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -872,14 +884,14 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                       </div>
                     )}
                   </div>
-                  <div className="p-6 border-t border-gray-300 flex-1">
-                    <h3 className="text-xl font-serif font-bold text-gray-900 mb-1 line-clamp-2">{faculty.name}</h3>
-                    <p className="text-sm text-gray-600 mb-1 uppercase tracking-wide line-clamp-2">{faculty.title}</p>
-                    <p className="text-sm text-gray-700 font-medium mb-3 line-clamp-1">{faculty.specialty}</p>
-                    <div className="border-t border-gray-300 pt-3 mt-3 text-sm text-gray-700">
+                  <div className="p-3 sm:p-5 md:p-6 border-t border-gray-300 flex-1">
+                    <h3 className="text-base sm:text-lg md:text-xl font-serif font-bold text-gray-900 mb-1 line-clamp-2">{faculty.name}</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1 uppercase tracking-wide line-clamp-2">{faculty.title}</p>
+                    <p className="text-xs sm:text-sm text-gray-700 font-medium mb-2 sm:mb-3 line-clamp-1">{faculty.specialty}</p>
+                    <div className="border-t border-gray-300 pt-2 sm:pt-3 mt-2 sm:mt-3 text-xs sm:text-sm text-gray-700">
                       <FormattedText
                         text={faculty.research}
-                        className="line-clamp-2"
+                        className="line-clamp-2 sm:line-clamp-2"
                       />
                     </div>
                   </div>
@@ -890,8 +902,8 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
         </section>
 
         <section id="admissions" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
-          <div className="max-w-5xl mx-auto">
-            <div className="mb-16">
+          <div className="max-w-6xl mx-auto">
+            <div className="section-intro">
               <h2 className="text-4xl font-serif font-bold text-gray-900 mb-4">
                 {localeContent.admissions.title}
               </h2>
@@ -902,7 +914,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
               />
             </div>
 
-            <div className="bg-gray-50 border border-gray-300 p-8 mb-8">
+            <div className="ui-card p-8 mb-8">
               <h3 className="text-2xl font-serif font-bold text-gray-900 mb-6">
                 {localeContent.admissions.requirementsTitle}
               </h3>
@@ -929,7 +941,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
               {localeContent.admissions.cards.map((card, index) => {
                 const IconComponent = iconMap[card.icon];
                 return (
-                  <div key={`${card.title}-${index}`} className="bg-white border-2 border-gray-900 p-6">
+                  <div key={`${card.title}-${index}`} className="ui-card ui-card-interactive p-6">
                     <IconComponent className="h-8 w-8 text-gray-900 mb-4" />
                     <h3 className="text-lg font-bold text-gray-900 mb-2">{card.title}</h3>
                     <div className="space-y-2 mb-4 text-sm text-gray-700">
@@ -966,7 +978,7 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
               {localeContent.contact.cards.map((card, index) => {
                 const IconComponent = iconMap[card.icon];
                 return (
-                  <div key={`${card.title}-${index}`} className="bg-gray-800 border border-gray-700 p-8 text-center hover:border-gray-600 transition-colors">
+                  <div key={`${card.title}-${index}`} className="bg-gray-800 border border-gray-700 p-8 text-center hover:border-gray-600 transition-colors motion-standard">
                     <div className="flex justify-center mb-4">
                       <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center">
                         <IconComponent className="h-8 w-8 text-gray-900" />
@@ -1027,7 +1039,6 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
       {selectedFaculty && selectedFacultyData && (
         <FacultyDetailOverlay
           faculty={selectedFacultyData}
-          localeLabel={localeLabels[selectedFaculty.locale]}
           onClose={() => setSelectedFaculty(null)}
         />
       )}
@@ -1042,7 +1053,7 @@ type AnnouncementCardProps = {
 
 function AnnouncementPreview({ announcement, onSelect }: AnnouncementCardProps) {
   return (
-    <div className="bg-gray-50 border border-gray-300 p-6 flex flex-col justify-between transition-colors transition-transform hover:-translate-y-0.5 hover:shadow-md hover:border-gray-900">
+    <div className="ui-card ui-card-interactive p-6 flex flex-col justify-between">
       <div>
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
           {announcement.date}

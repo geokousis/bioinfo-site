@@ -1,11 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Merriweather:wght@700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Global UX polish */
+:root {
+  --motion-duration-standard: 190ms;
+  --motion-duration-slow: 230ms;
+  --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --surface-border: #d4dbe4;
+  --surface-border-strong: #0f172a;
+  --surface-shadow: 0 12px 30px -22px rgba(15, 23, 42, 0.45);
+}
+
 html {
   scroll-behavior: smooth;
-  font-size: 120%; /* Make everything 20% bigger */
+  font-size: clamp(100%, calc(0.95rem + 0.2vw), 120%);
+  scrollbar-color: #cfd4db #ffffff;
+  scrollbar-width: thin;
+}
+
+body {
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+  color: #1f2937;
+  letter-spacing: 0.002em;
+}
+
+.font-serif,
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.005em;
+}
+
+p {
+  line-height: 1.7;
+}
+
+/* Subtle texture on light sections */
+main section.bg-white,
+main section.bg-gray-50 {
+  position: relative;
+  isolation: isolate;
+}
+
+main section.bg-white::before,
+main section.bg-gray-50::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.16;
+  background-image: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.2) 0.55px, transparent 0.65px);
+  background-size: 20px 20px;
+}
+
+main section.bg-white > *,
+main section.bg-gray-50 > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* White-themed scrollbar */
+html::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: #cfd4db;
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: #b8c0cb;
+}
+
+@layer components {
+  .section-intro {
+    margin-bottom: 3rem;
+  }
+
+  .motion-standard {
+    transition-duration: var(--motion-duration-standard) !important;
+    transition-timing-function: var(--motion-ease-standard) !important;
+  }
+
+  .ui-card {
+    border: 1px solid var(--surface-border);
+    background: rgba(255, 255, 255, 0.94);
+  }
+
+  .ui-card-interactive {
+    transition-property: transform, box-shadow, border-color, background-color;
+    transition-duration: var(--motion-duration-slow);
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  .ui-card-interactive:hover {
+    transform: translateY(-3px);
+    border-color: var(--surface-border-strong);
+    box-shadow: var(--surface-shadow);
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

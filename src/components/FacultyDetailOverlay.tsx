@@ -1,40 +1,57 @@
-import { Users, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import type { FacultyMember } from '../types';
 import { FormattedText } from './FormattedText';
 import { resolveAppUrl } from '../lib/url';
+import { useOverlayDialog } from '../hooks/useOverlayDialog';
 
 type FacultyDetailOverlayProps = {
   faculty: FacultyMember;
-  localeLabel: string;
   onClose: () => void;
 };
 
-export function FacultyDetailOverlay({ faculty, localeLabel, onClose }: FacultyDetailOverlayProps) {
+export function FacultyDetailOverlay({ faculty, onClose }: FacultyDetailOverlayProps) {
   const [open, setOpen] = useState(false);
+  const isClosingRef = useRef(false);
+  const closeTimerRef = useRef<number | undefined>(undefined);
+  const titleId = useId();
+
+  const handleClose = useCallback(() => {
+    if (isClosingRef.current) {
+      return;
+    }
+    isClosingRef.current = true;
+    setOpen(false);
+    closeTimerRef.current = window.setTimeout(() => onClose(), 150);
+  }, [onClose]);
+
+  const panelRef = useOverlayDialog({ onRequestClose: handleClose });
 
   useEffect(() => {
     // Trigger enter animation immediately
     requestAnimationFrame(() => setOpen(true));
+    return () => {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+      }
+    };
   }, []);
-
-  const handleClose = () => {
-    setOpen(false);
-    window.setTimeout(() => onClose(), 150);
-  };
 
   return (
     <div className={`fixed inset-0 z-[65] flex transition-opacity duration-150 ${open ? 'opacity-100' : 'opacity-0'}`}>
       <div className="flex-1 bg-black/60" onClick={handleClose} />
-      <aside className={`relative w-full max-w-3xl h-full bg-white overflow-y-auto border-l border-gray-200 transition-transform duration-150 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className={`relative w-full max-w-3xl h-full bg-white overflow-y-auto border-l border-gray-200 transition-transform duration-150 ease-out focus:outline-none ${open ? 'translate-x-0' : 'translate-x-full'}`}
+      >
         <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <div className="flex items-center space-x-2 text-xs uppercase tracking-wide text-gray-500">
-              <Users className="h-4 w-4" />
-              <span>{localeLabel}</span>
-            </div>
-            <h2 className="text-xl font-serif font-bold text-gray-900 mt-2">{faculty.name}</h2>
+            <h2 id={titleId} className="text-xl font-serif font-bold text-gray-900">{faculty.name}</h2>
             <p className="text-xs text-gray-500 mt-1">{faculty.title}</p>
           </div>
           <button
