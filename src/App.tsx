@@ -240,6 +240,11 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
   const badgeClickHref = badgeClickTarget?.href?.trim();
   const resolvedBadgeClickHref = badgeClickHref ? resolveNavHref(badgeClickHref) : undefined;
   const badgeClickAriaLabel = badgeClickTarget?.ariaLabel?.trim() || localeContent.hero.badgeText;
+  const heroTitleLines = localeContent.hero.title
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const heroTitleForSeo = heroTitleLines.join(' ');
 
   const handleSelectAnnouncement = (id: string) => {
     setSelectedAnnouncement({ locale: activeLocale, id });
@@ -477,10 +482,14 @@ function ProgramSite({ content, activeLocale, onChangeLocale }: ProgramSiteProps
                   </div>
                 )}
               </div>
-              <h1 className="text-[2.45rem] sm:text-[3.2rem] lg:text-[3.65rem] 2xl:text-[4.2rem] font-serif font-bold text-gray-900 mb-5 leading-tight [overflow-wrap:anywhere]">
-                {localeContent.hero.title.split('\n').map((line, index) => (
+              <h1
+                className="text-[2.45rem] sm:text-[3.2rem] lg:text-[3.65rem] 2xl:text-[4.2rem] font-serif font-bold text-gray-900 mb-5 leading-tight [overflow-wrap:anywhere]"
+                aria-label={heroTitleForSeo}
+              >
+                {heroTitleLines.map((line, index) => (
                   <span key={index} className="block">
                     {line}
+                    {index < heroTitleLines.length - 1 ? ' ' : ''}
                   </span>
                 ))}
               </h1>
