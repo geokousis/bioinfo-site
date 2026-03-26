@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 const githubRepoName = process.env.GITHUB_REPOSITORY?.split('/')[1];
 const githubPagesBase = githubRepoName ? `/${githubRepoName}/` : '/';
 const defaultProdBase = process.env.GITHUB_ACTIONS ? githubPagesBase : '/';
@@ -32,31 +34,27 @@ const prodCsp = [
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
   base: process.env.VITE_BASE_PATH ?? defaultProdBase,
-  plugins: [
-    react(),
-    {
-      name: 'inject-csp',
-      transformIndexHtml(html) {
-        const csp = command === 'serve' ? devCsp : prodCsp;
-        return html.replace('__CSP_CONTENT__', csp);
-      },
+  plugins: [react(), {
+    name: 'inject-csp',
+    transformIndexHtml(html) {
+      const csp = command === 'serve' ? devCsp : prodCsp;
+      return html.replace('__CSP_CONTENT__', csp);
     },
-    {
-      name: 'ip-logger',
-      configureServer(server) {
-        server.middlewares.use((req, _res, next) => {
-          const xff = req.headers['x-forwarded-for'];
-          const ip =
-            (typeof xff === 'string' && xff.split(',')[0]?.trim()) ||
-            req.socket.remoteAddress ||
-            'unknown';
-          const url = req.url || '-';
-          console.log(`[ip] ${ip} ${req.method} ${url}`);
-          next();
-        });
-      },
+  }, {
+    name: 'ip-logger',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        const xff = req.headers['x-forwarded-for'];
+        const ip =
+          (typeof xff === 'string' && xff.split(',')[0]?.trim()) ||
+          req.socket.remoteAddress ||
+          'unknown';
+        const url = req.url || '-';
+        console.log(`[ip] ${ip} ${req.method} ${url}`);
+        next();
+      });
     },
-  ],
+  }, cloudflare()],
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
